@@ -3,25 +3,7 @@
 
 http://code.google.com/p/mockfacebook/
 
-mockfacebook can be used in place of the live Facebook servers as an FQL and
-Graph API endpoint. It supports the full FQL query language and all Graph API
-endpoints except writing. It can download and uses data from live Facebook, or
-you can enter your own data.
-
-mockfacebook includes an automated utility that reads the Facebook developer
-docs and example data, infers and stores the current FQL and Graph API schemas,
-assists with building a schema mapping, and generates test data. This helps it
-stay up to date in the face of Facebook's rapid iteration and API changes. (It's
-also better than the Graph API's `?metadata=true`, which is often wrong or out
-of date because it's written by hand, not auto-generated from the real schema.)
-
-mockfacebook is backed by SQLite. It's single threaded, so it's not suitable for
-load testing, high throughput, or performance. If you need any of that, try
-http://www.friendrunner.com/ .
-
-Depends on the sqlparse package: http://code.google.com/p/python-sqlparse/
-
-Usage:
+Top-level HTTP server:
   server.py [--port PORT] [--me USER_ID] [--file SQLITE_DB_FILE]
 
 Supported FQL features:
