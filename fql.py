@@ -1,4 +1,7 @@
 """FQL request handler and support classes.
+
+TODO:
+- multi-query: https://developers.facebook.com/docs/reference/fql/
 """
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']

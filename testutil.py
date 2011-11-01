@@ -57,19 +57,20 @@ class HandlerTest(unittest.TestCase):
 
     self.app = server.application()
 
-  def expect(self, path, expected, args=None):
+  def expect(self, path, expected, args=None, expected_status=200):
     """Makes a request and checks the response.
 
     Args:
       path: string
       expected: if string, the expected response body. if list or dict,
         the expected JSON response contents.
-      kwargs: passed to get_response()
+      args: passed to get_response()
+      expected_status: integer, expected HTTP response status
     """
     response = None
     try:
       response = self.get_response(path, args=args)
-      self.assertEquals(200, response.status_int)
+      self.assertEquals(expected_status, response.status_int)
       response = response.body
       if isinstance(expected, basestring):
         self.assertEquals(expected, response)

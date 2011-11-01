@@ -6,16 +6,15 @@ Note that this code uses the term 'name' to mean something that's either an id
 or an alias.
 
 TODO:
-- errors are 400 not 200
-- make exceptions subclass exc classes, and drop try/excepts (let webapp2 do it)
+- connections as first path element, e.g. /tagged?ids=...
 - /fql?q=... for FQL:  https://developers.facebook.com/blog/post/579/
+- handle requests without a leading /, e.g. '?ids=...'
+
 - ?metadata=true introspection
 - non-obvious id aliases, e.g. comment ids can have the user id as a prefix, or not:
   https://graph.facebook.com/212038_227980440569633_3361295
   https://graph.facebook.com/227980440569633_3361295
 - batch requests: http://developers.facebook.com/docs/reference/api/batch/
-- handle requests without a leading /, e.g. '?ids=...'
-
 - bug: /picture?ids=... returns picture for arbitrary id, should be *first* id
 - ?date_format=...
 - figure out when FB returns "Unsupported get request" vs "access token
@@ -49,65 +48,63 @@ import schemautil
 REDIRECT_CONNECTION = 'picture'
 
 
-class GraphError(Exception):
+class Error(Exception):
   """Base error class.
 
   Attributes:
     message: string
-    type: string, optional
+    status: integer
   """
+  status = 400
   message = None
-  type = None
 
   def __init__(self, *args):
     self.message = self.message % args
 
-  def __unicode__(self):
-    if self.type:
-      return json.dumps({'error': {'message': self.message, 'type': self.type}})
-    else:
-      return self.message
+class JsonError(Error):
+  """JSON-formatted error class.
 
-  __str__ = __unicode__
+  Attributes:
+    type: string
+  """
+  type = 'OAuthException'
     
+  def __init__(self, *args):
+    self.message = json.dumps({'error': {'message': self.message, 'type': self.type}})
 
-class ObjectNotFoundError(GraphError):
+class ObjectNotFoundError(Error):
   """Used for /<id> requests."""
+  status = 200
   message = 'false'
 
-class ObjectsNotFoundError(GraphError):
+class ObjectsNotFoundError(Error):
   """Used for /?ids=... requests."""
+  status = 200
   message = '[\n\n]'
 
-class ConnectionNotFoundError(GraphError):
-  message = """{
-  "data": [
-  ]
-}"""
+class AccessTokenError(JsonError):
+  message = 'An access token is required to request this resource.'
 
-class AccessTokenError(GraphError):
-  message = 'A user access token is required to request this resource.'
-  type = 'OAuthException'
-
-class AliasNotFoundError(GraphError):
+class AliasNotFoundError(JsonError):
+  status = 404
   message = '(#803) Some of the aliases you requested do not exist: %s'
-  type = 'OAuthException'
 
-class BadGetError(GraphError):
+class BadGetError(JsonError):
   message = 'Unsupported get request.'
   type = 'GraphMethodException'
 
-class UnknownPathError(GraphError):
+class UnknownPathError(JsonError):
   message = 'Unknown path components: /%s'
-  type = 'OAuthException'
 
-class IdSpecifiedError(GraphError):
+class IdSpecifiedError(JsonError):
   message = 'Invalid token: \"%s\".  An ID has already been specified.'
-  type = 'OAuthException'
 
-class EmptyIdentifierError(GraphError):
+class EmptyIdentifierError(JsonError):
   message = 'Cannot specify an empty identifier'
-  type = 'OAuthException'
+
+class NoNodeError(JsonError):
+  message = 'No node specified'
+  type = 'Exception'
 
 
 class NameDict(dict):
@@ -167,21 +164,30 @@ class BaseHandler(webapp2.RequestHandler):
   def get(self, id, **kwargs):
     """Handles GET requests.
     """
-    try:
-      namedict = self.prepare_ids(id)
-      resp = self._get(namedict, **kwargs)
-      if namedict.single:
-        if not resp:
-          resp = []
-        else:
-          assert len(resp) == 1
-          resp = resp.values()[0]
-      resp = json.dumps(resp)
-    except GraphError, e:
-      resp = unicode(e)
-
     self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+
+    # try:
+    namedict = self.prepare_ids(id)
+    resp = self._get(namedict, **kwargs)
+    if namedict.single:
+      if not resp:
+        resp = []
+      else:
+        assert len(resp) == 1
+        resp = resp.values()[0]
+    resp = json.dumps(resp)
+    # except GraphError, e:
+    #   resp = unicode(e)
+
     self.response.out.write(resp)
+
+  def handle_exception(self, exception, debug):
+    """Handle Error exceptions."""
+    if isinstance(exception, Error):
+      self.response.write(exception.message)
+      self.response.set_status(exception.status)
+    else:
+      raise exception
 
   def prepare_ids(self, path_id):
     """Returns the id(s) for this request.

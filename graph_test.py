@@ -30,6 +30,13 @@ class TestBase(testutil.HandlerTest):
     self.assertEquals(302, resp.status_int)
     self.assertEquals(redirect_to, resp.headers['Location'])
 
+  def expect_error(self, path, exception):
+    """Args:
+      path: string
+      exception: expected instance of a GraphError subclass
+    """
+    self.expect(path, exception.message, expected_status=exception.status)
+
 
 class ObjectTest(TestBase):
 
@@ -45,26 +52,26 @@ class ObjectTest(TestBase):
     self.expect('/snarfed.org', self.snarfed)
 
   def test_not_found(self):
-    self.expect('/123', 'false')
+    self.expect_error('/123', graph.ObjectNotFoundError())
 
   def test_single_ids_not_found(self):
-    self.expect('/?ids=123', '[\n\n]')
+    self.expect_error('/?ids=123', graph.ObjectsNotFoundError())
 
   def test_multiple_ids_not_found(self):
-    self.expect('/?ids=123,456', '[\n\n]')
+    self.expect_error('/?ids=123,456', graph.ObjectsNotFoundError())
 
   def test_alias_not_found(self):
     for bad_query in '/foo', '/?ids=foo', '/?ids=snarfed.org,foo':
-      self.expect(bad_query, unicode(graph.AliasNotFoundError('foo')))
+      self.expect_error(bad_query, graph.AliasNotFoundError('foo'))
 
-    self.expect( '/?ids=foo,bar', unicode(graph.AliasNotFoundError('foo,bar')))
+    self.expect_error('/?ids=foo,bar', graph.AliasNotFoundError('foo,bar'))
 
   def test_id_already_specified(self):
-    self.expect('/foo?ids=bar', unicode(graph.IdSpecifiedError('foo')))
+    self.expect_error('/foo?ids=bar', graph.IdSpecifiedError('foo'))
 
   def test_empty_identifier(self):
     for bad_query in '/?ids=', '/?ids=snarfed.org,', '/?ids=snarfed.org,,212038':
-      self.expect(bad_query, unicode(graph.EmptyIdentifierError()))
+      self.expect_error(bad_query, graph.EmptyIdentifierError())
 
   def test_ids_query_param(self):
     self.expect('/?ids=snarfed.org,hearsaysocial',
@@ -98,10 +105,10 @@ class ConnectionTest(TestBase):
     self.expect('/123/albums', 'false')
 
   def test_alias_not_found(self):
-    self.expect('/foo/albums', unicode(graph.AliasNotFoundError('foo')))
+    self.expect_error('/foo/albums', graph.AliasNotFoundError('foo'))
 
   def test_connection_not_found(self):
-    self.expect('/snarfed.org/foo', unicode(graph.UnknownPathError('foo')))
+    self.expect_error('/snarfed.org/foo', graph.UnknownPathError('foo'))
 
   def test_no_connection_data(self):
     self.expect('/snarfed.org/family', {'data': []})
