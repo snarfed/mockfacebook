@@ -1,12 +1,11 @@
 #!/usr/bin/python
-"""Generates FQL and Graph API schemas and example data.
+"""Downloads FQL and Graph API schemas and example data.
 
-Usage: make_schema.py [options] ACCESS_TOKEN
-
-Gets the schema by scraping the Facebook API docs, and the example data by
-querying the user's own data with the given access token. Writes the schemas and
-example data as Python dictionaries (see schemautil.py), and also writes the FQL
-schemas and example data as SQLite CREATE TABLE and INSERT statements.
+Gets the FQL schema by scraping the Facebook API docs and the Graph API schema
+and example data by querying the user's own data with the given access token.
+Writes the schemas and example data as Python dictionaries (see schemautil.py),
+and writes the FQL schemas and example data as SQLite CREATE TABLE and INSERT
+statements.
 
 You can get an access token here:
 http://developers.facebook.com/tools/explorer?method=GET&path=me
@@ -38,11 +37,12 @@ foreach dir (api fql)
   # absolute file:/// url. (wget --convert-links makes them relative.)
   find $dir -type f | xargs sed -ri '\
     s/<script .+\/script>//g; \
-    s/<a href="http:\/\/developers.facebook.com\/docs\/reference([^"]+)"/<a href="file:\/\/\/home\/ryanb\/docs\/facebook\1index.html"/g'
+    s/<a href="http:\/\/developers.facebook.com\/docs\/reference([^"]+)"/<a href="file:\/\/\/home\/$USER\/docs\/facebook\1index.html"/g'
 end
 
 
 TODO:
+- parallelize batch requests
 - diff and notify of new columns, tables, changes etc. store old schema or
   deltas until explicitly dismissed so you can run it multiple times and still
   know what to go update later.
@@ -71,6 +71,9 @@ import schemautil
 
 HTTP_RETRIES = 5
 HTTP_TIMEOUT_S = 20
+
+# Facebook's limit on Graph API batch request size
+MAX_REQUESTS_PER_BATCH = 50
 
 # regexps for scraping facebook docs. naturally, these are very brittle.
 # TODO: use something like BeautifulSoup instead.
@@ -169,7 +172,7 @@ OVERRIDE_COLUMN_INDEXABLE = collections.defaultdict(dict, {
     })
 
 # these aren't just flat tables, they're more complicated.
-UNSUPPORTED_TABLES = ('insights', 'permissions', 'Subscription')
+UNSUPPORTED_TABLES = ('insights', 'permissions', 'subscription')
 
 # query snippets used in a few WHERE clauses for fetching FQL example data.
 #
@@ -349,11 +352,7 @@ SPECIAL_CONNECTIONS = (
   )
 
 # names of connections that shouldn't be published
-NON_PUBLISHABLE_CONNECTIONS = (
-  'inbox',
-  'outbox',
-  'updates',
-  )
+NON_PUBLISHABLE_CONNECTIONS = ('inbox', 'outbox', 'updates')
 
 # global optparse.OptionValues that holds flags
 options = None
@@ -366,9 +365,6 @@ def print_and_flush(str):
   sys.stdout.flush()
 
 
-class Redirected(Exception):
-  pass
-
 def urlopen_with_retries(url, data=None):
   """Wrapper for urlopen that automatically retries on HTTP errors.
 
@@ -378,13 +374,14 @@ def urlopen_with_retries(url, data=None):
   for i in range(HTTP_RETRIES + 1):
     try:
       opened = urllib2.urlopen(url, data=data, timeout=HTTP_TIMEOUT_S)
-      #   # this isn't a great way to determine if we were redirected - you can
-      #   # imagine some failure cases - but it's the simplest. discussion:
-      #   # http://stackoverflow.com/questions/110498
-      # if not redirect and opened.geturl() != url:
-      #   raise Redirected(opened.geturl())
-      # else:
-        # return opened
+      # if we ever need to determine whether we're redirected here, do something
+      # like this:
+      #
+      # if opened.geturl() != url:
+      #   ...
+      #
+      # it's not great - you can easily imagine failure cases - but it's by far
+      # the simplest way. discussion: http://stackoverflow.com/questions/110498
       return opened
 
     except (IOError, urllib2.HTTPError), e:
@@ -488,7 +485,8 @@ def scrape_schema(schema, url, column_re):
 
 
 def fetch_fql_data(schema):
-  """
+  """Downloads the FQL example data.
+
   Args:
     schema: schemautil.FqlSchema
 
@@ -516,7 +514,7 @@ def fetch_fql_data(schema):
 
     select_columns = ', '.join(c.name for c in columns)
     query = 'SELECT %s FROM %s WHERE %s LIMIT %d' % (
-        select_columns, table, where, options.rows_per_table)
+        select_columns, table, where, options.rows_per_fql_table)
     url = 'method/fql.query?%s' % urllib.urlencode(
       {'query': query, 'format': 'json'})
     urls[url] = (table, query)
@@ -533,17 +531,32 @@ def fetch_fql_data(schema):
   return dataset
 
 
-def fetch_graph_schema_and_data():
-  """Returns a (schemautil.GraphSchema, schemautil.GraphDataset) tuple.
+def get_graph_ids():
+  """Returns a list of Graph API ids/aliases to fetch as example data.
+
+  This depends on the access token, --publishable, --graph_ids, and --crawl.
+  """
+  if options.publishable:
+    return PUBLISHABLE_GRAPH_DATA_IDS
+  elif options.graph_ids:
+    return options.graph_ids
+  # elif options.crawl_friends:
+  #   return [f['id'] for f in batch_request(['me/friends'])['me/friends']['data']]
+  else:
+    return ['me']
+
+
+def fetch_graph_schema_and_data(ids):
+  """Downloads the Graph API schema and example data.
+
+  Args:
+    ids: sequence of ids and/or aliases to download
+
+  Returns: (schemautil.GraphSchema, schemautil.GraphDataset) tuple.
   """
   schema = schemautil.GraphSchema()
   dataset = schemautil.GraphDataset(schema)
-
   print_and_flush('Generating Graph API schema and example data')
-  if options.publishable:
-    ids = PUBLISHABLE_GRAPH_DATA_IDS
-  else:
-    ids = ME_GRAPH_DATA_IDS
 
   # fetch the objects
   objects = batch_request(ids, args={'metadata': 'true'})
@@ -641,9 +654,8 @@ def batch_request(urls, args=None):
   params = '?%s' % urllib.urlencode(args) if args else ''
   requests = [{'method': 'GET', 'relative_url': url + params} for url in urls]
 
-  # only 50 at a time TODO: constant
   responses = []
-  for i in range(0, len(requests), 50):
+  for i in range(0, len(requests), MAX_REQUESTS_PER_BATCH):
     data = urllib.urlencode({'access_token': options.access_token,
                              'batch': json.dumps(requests[i:i + 50])})
     response = urlopen_with_retries(options.graph_url, data=data)
@@ -673,9 +685,9 @@ def parse_args():
   """
   parser = optparse.OptionParser(
     usage='Usage: %prog [options] ACCESS_TOKEN',
-    description="""
-Generates FQL and Graph API schemas and example data for mockfacebook.'
-You can get an access token here (grant it *all* permissions!):
+    description="""\
+Generates FQL and Graph API schemas and example data for mockfacebook.
+You can get an access token here (grant it all permissions!):
 http://developers.facebook.com/tools/explorer?method=GET&path=me""")
 
   parser.add_option(
@@ -695,7 +707,7 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me""")
     default='https://graph.facebook.com/',
     help='Facebook Graph API endpoint URL.')
   parser.add_option(
-    '--rows_per_table', type='int', default=3,
+    '--rows_per_fql_table', type='int', default=3,
     help='number of example rows to fetch for (most) tables')
   parser.add_option(
     '--publishable', action='store_true', dest='publishable', default=False,
@@ -709,6 +721,12 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me""")
   parser.add_option(
     '--no_graph', action='store_false', dest='graph', default=True,
     help="don't generate Graph API schema or data. Use the existing files instead.")
+  parser.add_option(
+    '--graph_ids', type='string', dest='graph_ids', default=None,
+    help='comma separated list of Graph API ids/aliases to download.')
+  parser.add_option(
+    '--crawl', action='store_true', dest='crawl', default=False,
+    help='follow Graph API connections and download the objects they point to.')
 
   options, args = parser.parse_args()
   logging.debug('Command line options: %s' % options)
@@ -716,6 +734,11 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me""")
   if len(args) != 1:
     parser.print_help()
     sys.exit(1)
+  elif options.publishable and options.graph_ids:
+    print >> sys.stderr, '--publishable and --graph_ids are mutually exclusive.'
+    sys.exit(1)
+
+  options.graph_ids = options.graph_ids.split(',')
 
   options.access_token = args[0]
   return options
@@ -737,7 +760,8 @@ def main():
     dataset.write()
 
   if options.graph:
-    schema, dataset = fetch_graph_schema_and_data()
+    ids = get_graph_ids()
+    schema, dataset = fetch_graph_schema_and_data(ids)
     schema.write()
     dataset.write()
 

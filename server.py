@@ -38,12 +38,12 @@ http://developers.facebook.com/blog/post/429/
 
 
 TODO:
-- parallelize fql schema scrape http requests
 - load test download
+
+- parallelize fql schema scrape http requests
 - require locale and either native_hash or pre_hash_string for translation table:
   file:///home/ryanb/docs/facebook_fql/translation/index.html
 - query restrictions on unified_message and unified_thread
-
 - insights
 - the permissions table
 - validate subselects
