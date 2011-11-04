@@ -19,7 +19,7 @@ TODO:
 - ?date_format=...
 - figure out when FB returns "Unsupported get request" vs "access token
   required" vs plain false.
-- paging
+- paging: ?limit=x, ?offset=y
 - write support. publishing via POST, deleting via DELETE
   https://developers.facebook.com/docs/reference/api/#publishing
 - field selection: https://developers.facebook.com/docs/reference/api/#reading
@@ -166,7 +166,6 @@ class BaseHandler(webapp2.RequestHandler):
     """
     self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
 
-    # try:
     namedict = self.prepare_ids(id)
     resp = self._get(namedict, **kwargs)
     if namedict.single:
@@ -176,8 +175,6 @@ class BaseHandler(webapp2.RequestHandler):
         assert len(resp) == 1
         resp = resp.values()[0]
     resp = json.dumps(resp)
-    # except GraphError, e:
-    #   resp = unicode(e)
 
     self.response.out.write(resp)
 

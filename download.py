@@ -183,18 +183,19 @@ MY_APP_IDS = \
     'app_id IN (SELECT application_id FROM developer WHERE developer_id = me())'
 MY_PAGE_IDS = \
     'page_id IN (SELECT page_id FROM page_admin WHERE uid = me())'
+MY_QUESTION_IDS = 'id in (SELECT id FROM question WHERE owner = me())'
+MY_QUESTION_OPTION_IDS = \
+    'option_id in (SELECT id FROM question_option WHERE %s)' % MY_QUESTION_IDS
 MY_THREAD_IDS = \
-  'thread_id IN (SELECT thread_id FROM thread where folder_id = 0)' # 0 is inbox
+    'thread_id IN (SELECT thread_id FROM thread where folder_id = 0)' # 0 is inbox
 
 # maps table name to WHERE clause used in query for FQL example row(s) for that
-# table. a None value means the table isn't currently supported.
-#
-# these use data based on the access token's user. the --publishable flag
-# makes make_schema use PUBLISHABLE_FQL_DATA_WHERE_CLAUSES.
+# table, based on the access token's user. a None value means the table isn't
+# currently supported.
 ME_FQL_DATA_WHERE_CLAUSES = {
   'album': 'owner = me()',
   'application': MY_APP_IDS,
-  'apprequest': 'app_id = 256884317673197 AND recipient_uid = me()', # bridgy
+  'apprequest': 'app_id = 145634995501895 AND recipient_uid = me()', # Graph API Explorer
   'checkin': 'author_uid = me()',
   'comment': 'post_id IN (SELECT post_id FROM stream WHERE source_id = me())',
   'comments_info': MY_APP_IDS,
@@ -230,17 +231,19 @@ ME_FQL_DATA_WHERE_CLAUSES = {
   'photo': 'aid IN %s' % MY_ALBUM_IDS,
   'photo_tag': 'subject = me()',
   'place': MY_PAGE_IDS,
-  'privacy': 'id in %s' % MY_ALBUM_IDS,
+  'privacy': 'id IN %s' % MY_ALBUM_IDS,
+  'privacy_setting': None,
   'profile': MY_IDS,
+  'question': 'owner = me()',
+  'question_option': MY_QUESTION_IDS,
+  'question_option_votes': MY_QUESTION_OPTION_IDS,
   'review': 'reviewer_id = me()',
   'standard_friend_info': None,  # these need an app access token
   'standard_user_info': None,
   'status': 'uid = me()',
   'stream': 'source_id = me()',
   'stream_filter': 'uid = me()',
-  # stream_tag always returns 500s
-  # http://bugs.developers.facebook.net/show_bug.cgi?id=20657
-  # 'stream_tag': 'actor_id = me()',
+  'stream_tag': 'actor_id = me()',
   'thread': MY_THREAD_IDS,
   'translation': None,  # not supported yet
   # these need an access token for an app where me() is a developer, which takes
@@ -255,104 +258,37 @@ ME_FQL_DATA_WHERE_CLAUSES = {
   'video_tag': 'vid IN (SELECT vid FROM video WHERE owner = me())',
 }
 
-# where clauses for data, mostly Ryan's, that's ok to publish with mockfacebook.
-PUBLISHABLE_FQL_DATA_WHERE_CLAUSES = {
-  'album': 'object_id = 728033318233',         # Profile pictures
-  'application': 'app_id IN (256884317673197, 350685531728)',  # bridgy, FB for android
-  'apprequest': 'app_id = 256884317673197 AND recipient_uid = 212038',
-  'checkin': 'checkin_id = 907227436783',      # AT&T Park, 2011/9/8
-  # 9/11 truth and cookies picture, beer week note, privacy post link
-  'comment': 'object_id IN ("130490263692746", "341677305872", "252878954730164")',
-  'comments_info': 'app_id = "256884317673197"', # bridgy
-  'connection': 'source_id = 212038 AND target_id = 173304932707127', # Hearsay Social
-  'cookies': None,  # not supported
-  'developer': 'developer_id = 212038',        # Ryan
-  'domain': 'domain_name = "snarfed.org"',
-  'domain_admin': 'owner_id = 212038',
-  'event': 'eid = 209798352393506',            # Facebook tech talk
-  'event_member': 'eid = 209798352393506 and uid = 1201226147280080',
-  'family': 'profile_id = 1506309346',         # Ryan's mom :P
-  'friend_request': 'uid_to = 212038 AND uid_from = 78203334',
-  'friendlist': 'flid = "563724753913"',
-  'friendlist_member': 'flid = "563724753913" AND uid = "1506309346"',
-  'friend': 'uid1 = 212038 AND uid2 = 1506309346',
-  'group': 'gid = 13243224451',                # the band NIAYH
-  'group_member': 'uid = 212038 and gid = 13243224451',
-  'insights': None,  # not supported
-  'like': 'user_id = 212038 AND object_id = 610146888714', # Giants win!
-  'link': 'link_id = 252878954730164',         # privacy post on snarfed.org
-  'link_stat': 'url = "http://snarfed.org/"',
-  'mailbox_folder': None,
-  'message': None,
-  'note': 'note_id = 341677305872',            # SF Beer Week post on snarfed.org
-  'notification': None,
-  'object_url': 'id = 212038',
-  'page': 'page_id = 173304932707127',         # Hearsay Social
-  'page_admin': 'uid = 212038',
-  'page_blocked_user': 'page_id = 256884317673197', # bridgy
-  'page_fan': 'uid = 212038',
-  'permissions': None,
-  'permissions_info': 'permission_name = "read_stream"',
-  'photo': 'pid = 910696315249646',            # a rainbow! aww...
-  'photo_tag': 'pid = 6469549378760275842',    # Ryan making a face
-  'place': 'page_id = 116440731717551',        # AT&T Park
-  'privacy': 'id = 514986660443',              # Ryan's profile picture
-  'profile': 'username = "snarfed.org"',
-  'review': 'reviewee_id = 256884317673197',
-  'standard_friend_info': None,
-  'standard_user_info': None,
-  'status': 'uid = 212038',
-   # privacy blog post and AT&T park checkin
-  'stream': 'post_id IN ("212038_252878954730164", "212038_907227436783")',
-  'stream_filter': 'uid = "212038" and filter_key = "fl_563724753913"',
-  'stream_tag': 'target_id = 212038 AND post_id = 813353406219',
-  # not supported here...
-  'thread': None,
-  'translation': None,
-  'unified_message': None,
-  'unified_thread': None,
-  'unified_thread_action': None,
-  'unified_thread_count': None,
-  'url_like': 'user_id = 212038',
-  # Ryan, Chris Babson, Mike Vernal (published the video below)
-  'user': 'uid in (212038, 203128, 9074)',
-  'video': 'vid = 741181354461',  # facebook developer platform gong
-  'video_tag': None,
-}
-
-# Object IDs for example Graph API data, mostly Ryan's, that's ok to publish
-# with mockfacebook.
-PUBLISHABLE_GRAPH_DATA_IDS = [
-  '728033318233',           # album
-  '256884317673197',        # application
-  '907227436783',           # checkin
-  '130490263692746_848997', # comment
-  '10150150038100285',      # domain
-  '209798352393506',        # event
-  '563724753913',           # friendlist
-  '13243224451',            # group
-  '252878954730164',        # link
-  '341677305872',           # note
-  'hearsaysocial',          # page
-  '756014523673',           # photo
-  '10101532385094874',      # post
-  '869466649703',           # status
-  'snarfed.org',            # user
-  '741181354461',           # video
+# Object IDs for example Graph API data.
+ME_GRAPH_DATA_IDS = [
+  '10150146071791729', # album
+  '145634995501895',   # application (Graph API Explorer)
+  '19292868552_10150367816498553_19393342', # comment
+  '10150150038100285', # domain (snarfed.org)
+  '331218348435',      # event
+  '195466193802264',   # group
+  '19292868552_10150367816498553', # link
+  '122788341354',      # note
+  'platform',          # page
+  '10150318315203553', # photo
+  '19292868552_10150189643478553', # post
+  '10150224661566729', # status
+  'me',                # user
+  '10100722614406743', # video
 ]
 
+# Connections used to pull extra Graph API object ids based on the access
+# token's user.
+ME_GRAPH_DATA_ID_CONNECTIONS = ('checkins', 'friendlists')
 
 # names of connections that need special handling.
-SPECIAL_CONNECTIONS = (
+UNSUPPORTED_CONNECTIONS = (
   'mutualfriends',  # needs either /USER_ID suffix or other user's access token
   'payments',       # http://developers.facebook.com/docs/creditsapi/#getorders
   'subscriptions',  # http://developers.facebook.com/docs/reference/api/realtime/
+  'insights',       # http://developers.facebook.com/docs/reference/api/insights/
   # Comment.likes gives the error described here:
   # http://stackoverflow.com/questions/7635627/facebook-graph-api-batch-requests-retrieve-comments-likes-error
   )
-
-# names of connections that shouldn't be published
-NON_PUBLISHABLE_CONNECTIONS = ('inbox', 'outbox', 'updates')
 
 # global optparse.OptionValues that holds flags
 options = None
@@ -495,10 +431,7 @@ def fetch_fql_data(schema):
   """
   print_and_flush('Generating FQL example data')
   dataset = schemautil.FqlDataset(schema)
-  if options.publishable:
-    where_clauses = PUBLISHABLE_FQL_DATA_WHERE_CLAUSES
-  else:
-    where_clauses = ME_FQL_DATA_WHERE_CLAUSES
+  where_clauses = ME_FQL_DATA_WHERE_CLAUSES
 
   # build FQL queries. this dict maps url to (table, query) tuple.
   urls = {}
@@ -514,7 +447,7 @@ def fetch_fql_data(schema):
 
     select_columns = ', '.join(c.name for c in columns)
     query = 'SELECT %s FROM %s WHERE %s LIMIT %d' % (
-        select_columns, table, where, options.rows_per_fql_table)
+        select_columns, table, where, options.num_per_type)
     url = 'method/fql.query?%s' % urllib.urlencode(
       {'query': query, 'format': 'json'})
     urls[url] = (table, query)
@@ -534,16 +467,16 @@ def fetch_fql_data(schema):
 def get_graph_ids():
   """Returns a list of Graph API ids/aliases to fetch as example data.
 
-  This depends on the access token, --publishable, --graph_ids, and --crawl.
+  This depends on the access token, --graph_ids, and --crawl_friends.
   """
-  if options.publishable:
-    return PUBLISHABLE_GRAPH_DATA_IDS
-  elif options.graph_ids:
+  if options.graph_ids:
     return options.graph_ids
-  # elif options.crawl_friends:
-  #   return [f['id'] for f in batch_request(['me/friends'])['me/friends']['data']]
+  elif options.crawl_friends:
+    return [f['id'] for f in batch_request(['me/friends'])['me/friends']['data']]
   else:
-    return ['me']
+    urls = ['me/%s?limit=1' % conn for conn in ME_GRAPH_DATA_ID_CONNECTIONS]
+    conn_ids = [resp['data'][0]['id'] for resp in batch_request(urls).values()]
+    return ME_GRAPH_DATA_IDS + conn_ids
 
 
 def fetch_graph_schema_and_data(ids):
@@ -559,7 +492,8 @@ def fetch_graph_schema_and_data(ids):
   print_and_flush('Generating Graph API schema and example data')
 
   # fetch the objects
-  objects = batch_request(ids, args={'metadata': 'true'})
+  objects = batch_request(ids, args={'metadata': 'true',
+                                     'limit': options.num_per_type})
 
   # strip the metadata and generate and store the schema
   connections = []  # list of (name, url) tuples
@@ -568,8 +502,10 @@ def fetch_graph_schema_and_data(ids):
     table = object['type']
 
     # columns
-    schema.tables[table] = [column_from_metadata_field(table, field)
-                            for field in metadata['fields']]
+    fields = metadata.get('fields')
+    if fields:
+      schema.tables[table] = [column_from_metadata_field(table, f) for f in fields]
+
     # connections
     conns = metadata.get('connections')
     if conns:
@@ -580,15 +516,10 @@ def fetch_graph_schema_and_data(ids):
   dataset.data = dict((id, schemautil.Data(table=table, query=id, data=object))
                       for id, object in objects.items())
 
-  # flatten, filter, and fetch the connections
-  def include(conn):
-    return not (conn in SPECIAL_CONNECTIONS or
-                (options.publishable and name in NON_PUBLISHABLE_CONNECTIONS))
-
   conn_paths = [urlparse.urlparse(url).path
-                for name, url in connections if include(name)]
+                for name, url in connections if name not in UNSUPPORTED_CONNECTIONS]
   conn_paths = list(itertools.chain(conn_paths))  # flatten
-  results = batch_request(conn_paths)
+  results = batch_request(conn_paths, args={'limit': options.num_per_type})
 
   # store the connections in the dataset
   for path, result in results.items():
@@ -651,6 +582,7 @@ def batch_request(urls, args=None):
   """
   print_and_flush('.')
 
+  urls = list(urls)
   params = '?%s' % urllib.urlencode(args) if args else ''
   requests = [{'method': 'GET', 'relative_url': url + params} for url in urls]
 
@@ -707,26 +639,23 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me""")
     default='https://graph.facebook.com/',
     help='Facebook Graph API endpoint URL.')
   parser.add_option(
-    '--rows_per_fql_table', type='int', default=3,
-    help='number of example rows to fetch for (most) tables')
+    '--num_per_type', type='int', default=3,
+    help='max objects/connections to fetch per type (with some exceptions)')
   parser.add_option(
-    '--publishable', action='store_true', dest='publishable', default=False,
-    help='fetch specific publishable data that can go in mockfacebook releases')
-  parser.add_option(
-    '--no_fql_schema', action='store_false', dest='fql_schema', default=True,
-    help="don't generate an FQL schema. Use the existing schema file instead.")
+    '--fql_schema', action='store_true', dest='fql_schema', default=False,
+    help="Scrape the FQL schema instead of using the existing schema file.")
   parser.add_option(
     '--no_fql_data', action='store_false', dest='fql_data', default=True,
-    help="don't generate FQL example data.")
+    help="Don't generate FQL example data.")
   parser.add_option(
     '--no_graph', action='store_false', dest='graph', default=True,
-    help="don't generate Graph API schema or data. Use the existing files instead.")
+    help="Don't generate Graph API schema or data. Use the existing files instead.")
   parser.add_option(
     '--graph_ids', type='string', dest='graph_ids', default=None,
     help='comma separated list of Graph API ids/aliases to download.')
   parser.add_option(
-    '--crawl', action='store_true', dest='crawl', default=False,
-    help='follow Graph API connections and download the objects they point to.')
+    '--crawl_friends', action='store_true', dest='crawl_friends', default=False,
+    help='follow and download all users who are friends of the current user.')
 
   options, args = parser.parse_args()
   logging.debug('Command line options: %s' % options)
@@ -734,11 +663,12 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me""")
   if len(args) != 1:
     parser.print_help()
     sys.exit(1)
-  elif options.publishable and options.graph_ids:
-    print >> sys.stderr, '--publishable and --graph_ids are mutually exclusive.'
+  elif options.crawl_friends and options.graph_ids:
+    print >> sys.stderr, '--crawl_friends and --graph_ids are mutually exclusive.'
     sys.exit(1)
 
-  options.graph_ids = options.graph_ids.split(',')
+  if options.graph_ids:
+    options.graph_ids = options.graph_ids.split(',')
 
   options.access_token = args[0]
   return options
