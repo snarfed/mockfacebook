@@ -38,10 +38,11 @@ http://developers.facebook.com/blog/post/429/
 
 
 TODO before release:
-- dependencies
 - separate full data unit tests
+- new db each time except for all data tests
+- no double slashes for connection first
 - server db file handling
-- readme
+- readme, including get sqlparse package or dl/symlink, http://code.google.com/p/python-sqlparse/
 - both fql endpoints
 - test server
 

@@ -16,14 +16,26 @@ import testutil
 
 class TestBase(testutil.HandlerTest):
 
-  dataset = schemautil.GraphDataset.read()
+  def setUp(self, *args):
+    super(TestBase, self).setUp(*args)
+    self.alice = {'id': '1', 'foo': 'bar'}
+    self.bob = {'id': '2', 'inner': {'foo': 'baz'}}
+    self.alice_albums = {'data': [{'id': '3'}, {'id': '4'}]}
+    self.bob_albums = {'data': [{'id': '5'}]}
 
-  def _test_every(self, data):
-    """Args:
-      data: list of Data or Connection with url paths and expected results
-    """
-    for datum in data:
-      self.expect('/%s' % datum.query, datum.data)
+    self.conn.executescript("""
+DELETE FROM graph_objects;
+INSERT INTO graph_objects VALUES('1', 'alice', '{"id": "1", "foo": "bar"}');
+INSERT INTO graph_objects VALUES('2', 'bob', '{"id": "2", "inner": {"foo": "baz"}}');
+
+DELETE FROM graph_connections;
+INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "3"}');
+INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "4"}');
+INSERT INTO graph_connections VALUES('2', 'albums', '{"id": "5"}');
+INSERT INTO graph_connections VALUES('1', 'picture', '"http://alice/picture"');
+INSERT INTO graph_connections VALUES('2', 'picture', '"http://bob/picture"');
+""")
+    self.conn.commit()
 
   def expect_redirect(self, path, redirect_to):
     resp = self.get_response(path)
@@ -42,26 +54,24 @@ class ObjectTest(TestBase):
 
   def setUp(self):
     super(ObjectTest, self).setUp(graph.ObjectHandler)
-    self.snarfed = self.dataset.data['snarfed.org'].data
-    self.hearsay = self.dataset.data['hearsaysocial'].data
 
-  def test_every_data(self):
-    self._test_every(self.dataset.data.values())
+  def test_id(self):
+    self.expect('/1', self.alice)
 
   def test_alias(self):
-    self.expect('/snarfed.org', self.snarfed)
+    self.expect('/alice', self.alice)
 
   def test_not_found(self):
-    self.expect_error('/123', graph.ObjectNotFoundError())
+    self.expect_error('/9', graph.ObjectNotFoundError())
 
   def test_single_ids_not_found(self):
-    self.expect_error('/?ids=123', graph.ObjectsNotFoundError())
+    self.expect_error('/?ids=9', graph.ObjectsNotFoundError())
 
   def test_multiple_ids_not_found(self):
-    self.expect_error('/?ids=123,456', graph.ObjectsNotFoundError())
+    self.expect_error('/?ids=9,8', graph.ObjectsNotFoundError())
 
   def test_alias_not_found(self):
-    for bad_query in '/foo', '/?ids=foo', '/?ids=snarfed.org,foo':
+    for bad_query in '/foo', '/?ids=foo', '/?ids=alice,foo':
       self.expect_error(bad_query, graph.AliasNotFoundError('foo'))
 
     self.expect_error('/?ids=foo,bar', graph.AliasNotFoundError('foo,bar'))
@@ -70,61 +80,53 @@ class ObjectTest(TestBase):
     self.expect_error('/foo?ids=bar', graph.IdSpecifiedError('foo'))
 
   def test_empty_identifier(self):
-    for bad_query in '/?ids=', '/?ids=snarfed.org,', '/?ids=snarfed.org,,212038':
+    for bad_query in '/?ids=', '/?ids=alice,', '/?ids=alice,,2':
       self.expect_error(bad_query, graph.EmptyIdentifierError())
 
   def test_ids_query_param(self):
-    self.expect('/?ids=snarfed.org,hearsaysocial',
-                {'snarfed.org': self.snarfed, 'hearsaysocial': self.hearsay})
-    self.expect('/?ids=hearsaysocial,212038',
-                {'212038': self.snarfed, 'hearsaysocial': self.hearsay})
+    self.expect('/?ids=alice,bob',
+                {'alice': self.alice, 'bob': self.bob})
+    self.expect('/?ids=bob,1',
+                {'1': self.alice, 'bob': self.bob})
 
   def test_ids_always_prefers_alias(self):
-    self.expect('/?ids=snarfed.org,212038', {'snarfed.org': self.snarfed})
-    self.expect('/?ids=212038,snarfed.org', {'snarfed.org': self.snarfed})
+    self.expect('/?ids=alice,1', {'alice': self.alice})
+    self.expect('/?ids=1,alice', {'alice': self.alice})
 
 
 class ConnectionTest(TestBase):
 
   def setUp(self):
     super(ConnectionTest, self).setUp(graph.ConnectionHandler)
-    self.snarfed_albums = self.dataset.connections['snarfed.org/albums'].data
-    self.hearsay_albums = self.dataset.connections['hearsaysocial/albums'].data
-
-  def test_every_connection(self):
-    self._test_every(conn for conn in self.dataset.connections.values()
-                     if conn.name != graph.REDIRECT_CONNECTION)
 
   def test_id(self):
-    self.expect('/212038/albums', self.snarfed_albums)
+    self.expect('/1/albums', self.alice_albums)
 
   def test_alias(self):
-    self.expect('/snarfed.org/albums', self.snarfed_albums)
+    self.expect('/alice/albums', self.alice_albums)
 
   def test_id_not_found(self):
-    self.expect('/123/albums', 'false')
+    self.expect('/9/albums', 'false')
 
   def test_alias_not_found(self):
     self.expect_error('/foo/albums', graph.AliasNotFoundError('foo'))
 
   def test_connection_not_found(self):
-    self.expect_error('/snarfed.org/foo', graph.UnknownPathError('foo'))
+    self.expect_error('/alice/foo', graph.UnknownPathError('foo'))
 
   def test_no_connection_data(self):
-    self.expect('/snarfed.org/family', {'data': []})
-    self.expect('//family?ids=snarfed.org', {'snarfed.org': {'data': []}})
+    self.expect('/alice/family', {'data': []})
+    self.expect('//family?ids=alice', {'alice': {'data': []}})
 
   def test_ids_query_param(self):
-    self.expect('//albums?ids=snarfed.org,hearsaysocial',
-                {'snarfed.org': self.snarfed_albums,
-                 'hearsaysocial': self.hearsay_albums,
-                 })
+    self.expect('//albums?ids=alice,bob',
+                {'alice': self.alice_albums, 'bob': self.bob_albums})
 
   def test_picture_redirect(self):
-    for path in ('/snarfed.org/picture',
-                 '//picture?ids=snarfed.org',
-                 '//picture?ids=snarfed.org,hearsaysocial'):
-      expected = self.dataset.connections['snarfed.org/picture'].data['data'][0]
+    for path in ('/alice/picture',
+                 '//picture?ids=alice',
+                 '//picture?ids=alice,bob'):
+      expected = 'http://alice/picture'
       self.expect_redirect(path, expected)
 
 

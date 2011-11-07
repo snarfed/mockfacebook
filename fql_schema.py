@@ -1,6 +1,6 @@
 # Do not edit! Generated automatically by mockfacebook.
 # http://code.google.com/p/mockfacebook/
-# 2011-10-28 15:41:32.931426
+# 2011-11-07 13:54:37.125627
 
 {'tables': {'album': (Column(name='aid', fb_type='string', sqlite_type='TEXT', indexable=True),
                       Column(name='object_id', fb_type='int', sqlite_type='INTEGER', indexable=True),
@@ -422,6 +422,7 @@
                        Column(name='xid', fb_type='int', sqlite_type='INTEGER', indexable=True),
                        Column(name='tagged_ids', fb_type='array', sqlite_type='', indexable=False),
                        Column(name='message_tags', fb_type='array', sqlite_type='', indexable=False),
+                       Column(name='description', fb_type='string', sqlite_type='TEXT', indexable=False),
                        Column(name='description_tags', fb_type='array', sqlite_type='', indexable=False)),
             'stream_filter': (Column(name='uid', fb_type='int', sqlite_type='INTEGER', indexable=True),
                               Column(name='filter_key', fb_type='string', sqlite_type='TEXT', indexable=True),

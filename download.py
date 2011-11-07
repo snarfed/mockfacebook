@@ -513,8 +513,9 @@ def fetch_graph_schema_and_data(ids):
       connections.extend(conns.items())
 
   # store the objects in the dataset
-  dataset.data = dict((id, schemautil.Data(table=table, query=id, data=object))
-                      for id, object in objects.items())
+  dataset.data = dict(
+    (id, schemautil.Data(table=object['type'], query=id, data=object))
+    for id, object in objects.items())
 
   conn_paths = [urlparse.urlparse(url).path
                 for name, url in connections if name not in UNSUPPORTED_CONNECTIONS]

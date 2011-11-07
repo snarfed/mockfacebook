@@ -1,6 +1,6 @@
 -- Do not edit! Generated automatically by mockfacebook.
 -- http://code.google.com/p/mockfacebook/
--- 2011-10-28 15:41:32.931426
+-- 2011-11-07 13:54:37.125627
 
 
 CREATE TABLE `album` (
@@ -562,6 +562,7 @@ CREATE TABLE `stream` (
   xid INTEGER,
   tagged_ids ,
   message_tags ,
+  description TEXT,
   description_tags 
 );
 
