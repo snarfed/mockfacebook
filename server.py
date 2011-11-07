@@ -37,8 +37,13 @@ http://groups.google.com/group/thinkupapp/browse_thread/thread/825ed3989d5eb164/
 http://developers.facebook.com/blog/post/429/
 
 
-TODO:
-- load test download
+TODO before release:
+- dependencies
+- separate full data unit tests
+- server db file handling
+- readme
+- both fql endpoints
+- test server
 
 - parallelize fql schema scrape http requests
 - require locale and either native_hash or pre_hash_string for translation table:

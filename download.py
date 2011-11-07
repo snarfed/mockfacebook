@@ -192,7 +192,7 @@ MY_THREAD_IDS = \
 # maps table name to WHERE clause used in query for FQL example row(s) for that
 # table, based on the access token's user. a None value means the table isn't
 # currently supported.
-ME_FQL_DATA_WHERE_CLAUSES = {
+FQL_DATA_WHERE_CLAUSES = {
   'album': 'owner = me()',
   'application': MY_APP_IDS,
   'apprequest': 'app_id = 145634995501895 AND recipient_uid = me()', # Graph API Explorer
@@ -259,7 +259,7 @@ ME_FQL_DATA_WHERE_CLAUSES = {
 }
 
 # Object IDs for example Graph API data.
-ME_GRAPH_DATA_IDS = [
+GRAPH_DATA_IDS = [
   '10150146071791729', # album
   '145634995501895',   # application (Graph API Explorer)
   '19292868552_10150367816498553_19393342', # comment
@@ -278,7 +278,7 @@ ME_GRAPH_DATA_IDS = [
 
 # Connections used to pull extra Graph API object ids based on the access
 # token's user.
-ME_GRAPH_DATA_ID_CONNECTIONS = ('checkins', 'friendlists')
+GRAPH_DATA_ID_CONNECTIONS = ('checkins', 'friendlists')
 
 # names of connections that need special handling.
 UNSUPPORTED_CONNECTIONS = (
@@ -431,7 +431,7 @@ def fetch_fql_data(schema):
   """
   print_and_flush('Generating FQL example data')
   dataset = schemautil.FqlDataset(schema)
-  where_clauses = ME_FQL_DATA_WHERE_CLAUSES
+  where_clauses = FQL_DATA_WHERE_CLAUSES
 
   # build FQL queries. this dict maps url to (table, query) tuple.
   urls = {}
@@ -474,9 +474,9 @@ def get_graph_ids():
   elif options.crawl_friends:
     return [f['id'] for f in batch_request(['me/friends'])['me/friends']['data']]
   else:
-    urls = ['me/%s?limit=1' % conn for conn in ME_GRAPH_DATA_ID_CONNECTIONS]
+    urls = ['me/%s?limit=1' % conn for conn in GRAPH_DATA_ID_CONNECTIONS]
     conn_ids = [resp['data'][0]['id'] for resp in batch_request(urls).values()]
-    return ME_GRAPH_DATA_IDS + conn_ids
+    return GRAPH_DATA_IDS + conn_ids
 
 
 def fetch_graph_schema_and_data(ids):
@@ -655,7 +655,7 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me""")
     help='comma separated list of Graph API ids/aliases to download.')
   parser.add_option(
     '--crawl_friends', action='store_true', dest='crawl_friends', default=False,
-    help='follow and download all users who are friends of the current user.')
+    help='follow and download friends of the current user (Graph API data only).')
 
   options, args = parser.parse_args()
   logging.debug('Command line options: %s' % options)
