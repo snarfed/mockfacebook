@@ -28,53 +28,51 @@ import testutil
 class ServerTest(mox.MoxTestBase):
   """Integration test. Starts the server and makes HTTP requests to localhost.
 
-  Class attributes:
-    port: integer port to run the server on
+  Ideally the _test_*() methods would be real, top-level test methods, but
+  starting and stopping the server for each test was too slow,
+  and without class-level setUp() and tearDown(), I couldn 't hook into shutdown
+  easily to stop the server. Not even an atexit handler worked. :/
+
+  Attributes:
     db_filename: string SQLite db filename
     thread: Thread running the server
   """
 
-  port = 60000
+  PORT = 60000
+  db_filename = None
+  thread = None
 
-  @classmethod
-  def start_server(cls):
-    """Sets up and starts the server if it's not already running.
-    """
+  def setUp(self):
     warnings.filterwarnings('ignore', 'tempnam is a potential security risk')
-    cls.db_filename = os.tempnam('/tmp', 'mockfacebook_test.')
-    ServerTest.port += 1
+    self.db_filename = os.tempnam('/tmp', 'mockfacebook_test.')
 
-    conn = testutil.make_test_db(cls.db_filename)
+    conn = testutil.make_test_db(self.db_filename)
     fql_test.insert_test_data(conn)
     graph_test.insert_test_data(conn)
     conn.close()
 
     started = threading.Event()
-    cls.thread = threading.Thread(
+    self.thread = threading.Thread(
       target=server.main,
-      args=(['--file', cls.db_filename,
-             '--port', str(ServerTest.port),
+      args=(['--file', self.db_filename,
+             '--port', str(self.PORT),
              '--me', '1',
              ],),
       kwargs={'started': started})
-    cls.thread.start()
+    self.thread.start()
     started.wait()
 
-  @classmethod
-  def stop_server(cls):
-    """Stops the server if it's running.
-    """
-    print 'trying'
+  def tearDown(self):
     server.server.shutdown()
-    cls.thread.join()
+    self.thread.join()
 
     try:
-      os.remove(cls.db_filename)
+      os.remove(self.db_filename)
     except:
       pass
 
   def expect(self, path, args, expected):
-    """Makes an HTTP request and checks the result.
+    """Makes an HTTP request and optionally checks the result.
 
     Args:
       path: string
@@ -84,26 +82,32 @@ class ServerTest(mox.MoxTestBase):
     Returns:
       string response
     """
-    url = 'http://localhost:%d%s?%s' % (self.port, path, urllib.urlencode(args))
+    url = 'http://localhost:%d%s?%s' % (self.PORT, path, urllib.urlencode(args))
     resp = urllib2.urlopen(url).read()
     if expected:
       self.assertEquals(expected, resp)
     return resp
 
-  def test_fql(self):
+  def test_all(self):
+    self._test_fql()
+    self._test_graph()
+    self._test_oauth()
+    self._test_404()
+
+  def _test_fql(self):
     query = 'SELECT username FROM profile WHERE id = me()'
     expected = '[{"username": "alice"}]'
     self.expect('/method/fql.query', {'query': query, 'format': 'json'}, expected)
     self.expect('/fql', {'q': query}, expected)
 
-  def test_graph(self):
+  def _test_graph(self):
     self.expect('/1', {}, '{"foo": "bar", "id": "1"}')
     self.expect('/bob/albums', {}, '{"data": [{"id": "5"}]}')
 
-  def test_oauth(self):
+  def _test_oauth(self):
     args = {'client_id': 'x',
             'client_secret': 'y',
-            'redirect_uri': 'http://localhost:%d/placeholder' % self.port,
+            'redirect_uri': 'http://localhost:%d/placeholder' % self.PORT,
             }
     try:
       self.expect('/dialog/oauth', args, None)
@@ -116,7 +120,7 @@ class ServerTest(mox.MoxTestBase):
     resp = self.expect('/oauth/access_token', args, None)
     assert re.match('access_token=.+&expires=999999', resp), resp
 
-  def test_404(self):
+  def _test_404(self):
     try:
       resp = self.expect('/not_found', {}, '')
       fail('Should have raised HTTPError')
@@ -125,6 +129,4 @@ class ServerTest(mox.MoxTestBase):
 
 
 if __name__ == '__main__':
-  ServerTest.start_server()
-  atexit.register(lambda: ServerTest.stop_server())
   unittest.main()
