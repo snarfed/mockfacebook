@@ -238,7 +238,9 @@ class FqlHandler(webapp2.RequestHandler):
 %s
 </error_response>"""
 
-  ROUTES = [(r'/method/fql.query/?', 'fql.FqlHandler')]
+  ROUTES = [(r'/method/fql.query/?', 'fql.FqlHandler'),
+            ('/fql', 'fql.FqlHandler'),
+            ]
 
   @classmethod
   def init(cls, conn, me):
@@ -252,11 +254,13 @@ class FqlHandler(webapp2.RequestHandler):
 
   def get(self):
     table = ''
+    graph_endpoint = (self.request.path == '/fql')
 
     try:
-      query = self.request.get('query')
+      query_arg = 'q' if graph_endpoint else 'query'
+      query = self.request.get(query_arg)
       if not query:
-        raise MissingParamError('query')
+        raise MissingParamError(query_arg)
       logging.debug('Received FQL query: %s' % query)
 
       fql = Fql(self.schema, query, self.me)
@@ -276,7 +280,7 @@ class FqlHandler(webapp2.RequestHandler):
     except FqlError, e:
       results = self.error(self.request.GET, e.code, e.msg)
 
-    if self.request.get('format') == 'json':
+    if self.request.get('format') == 'json' or graph_endpoint:
       body = self.render_json(results)
     else:
       body = self.render_xml(results, table)

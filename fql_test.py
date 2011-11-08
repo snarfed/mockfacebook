@@ -69,8 +69,7 @@ INSERT INTO page(name, categories) VALUES('my_page', '["foo", "bar"]');
       expected: list or dict that the JSON response should match
       format: passed as the format URL query parameter
     """
-    super(FqlHandlerTest, self).expect('/method/fql.query', expected,
-                                       {'format': format, 'query': fql})
+    self.expect('/method/fql.query', expected, {'format': format, 'query': fql})
 
   def expect_error(self, query, error):
     """Runs a query and checks that it returns the given error code and message.
@@ -109,6 +108,15 @@ INSERT INTO page(name, categories) VALUES('my_page', '["foo", "bar"]');
         traceback.print_exc()
 
     self.assertTrue(passed)
+
+  def test_graph_endpoint(self):
+    args = {'q': 'SELECT id FROM profile WHERE username = "alice"'}
+    expected = [{'id': 1}]
+    self.expect('/fql', expected, args)
+
+    # this endpoint doesn't support XML format
+    args['format'] = 'xml'
+    self.expect('/fql', expected, args)
 
   def test_multiple_where_conditions(self):
     self.expect_fql(
