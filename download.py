@@ -599,7 +599,7 @@ def batch_request(urls, args=None):
   for i in range(0, len(requests), MAX_REQUESTS_PER_BATCH):
     data = urllib.urlencode({'access_token': options.access_token,
                              'batch': json.dumps(requests[i:i + 50])})
-    response = urlopen_with_retries(options.graph_url, data=data)
+    response = urlopen_with_retries(options.graph_api_url, data=data)
     responses.extend(json.loads(response.read()))
     print_and_flush('.')
 
@@ -634,19 +634,16 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me""")
   parser.add_option(
     '--fql_docs_url', type='string',
     default='http://developers.facebook.com/docs/reference/fql/',
-    help='Base URL for the Facebook FQL reference docs.')
+    help='Base URL for the Facebook FQL reference docs (default %default).')
+  # only needed for facebook_query(), which is commented out above and may die.
+  # parser.add_option(
+  #   '--fql_url', type='string',
+  #   default='https://api.facebook.com/method/fql.query',
+  #   help='Facebook FQL API endpoint URL (default %default).')
   parser.add_option(
-    '--graph_docs_url', type='string',
-    default='http://developers.facebook.com/docs/reference/api/',
-    help='Base URL for the Facebook Graph API reference docs.')
-  parser.add_option(
-    '--fql_url', type='string',
-    default='https://api.facebook.com/method/fql.query',
-    help='Facebook FQL API endpoint URL.')
-  parser.add_option(
-    '--graph_url', type='string',
+    '--graph_api_url', type='string',
     default='https://graph.facebook.com/',
-    help='Facebook Graph API endpoint URL.')
+    help='Facebook Graph API endpoint URL (default %default).')
   parser.add_option(
     '--num_per_type', type='int', default=3,
     help='max objects/connections to fetch per type (with some exceptions)')
@@ -664,7 +661,10 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me""")
     help='comma separated list of Graph API ids/aliases to download.')
   parser.add_option(
     '--crawl_friends', action='store_true', dest='crawl_friends', default=False,
-    help='follow and download friends of the current user (Graph API data only).')
+    help='follow and download friends of the current user. Graph API data only.')
+  parser.add_option(
+    '--db_file', type='string', default=schemautil.DEFAULT_DB_FILE,
+    help='SQLite database file (default %default). Set to the empty string to prevent writing a database file.')
 
   options, args = parser.parse_args()
   logging.debug('Command line options: %s' % options)
@@ -696,13 +696,13 @@ def main():
 
   if options.fql_data:
     dataset = fetch_fql_data(fql_schema)
-    dataset.write()
+    dataset.write(db_file=options.db_file)
 
   if options.graph:
     ids = get_graph_ids()
     schema, dataset = fetch_graph_schema_and_data(ids)
     schema.write()
-    dataset.write()
+    dataset.write(db_file=options.db_file)
 
 
 if __name__ == '__main__':

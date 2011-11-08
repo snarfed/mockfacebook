@@ -3,7 +3,7 @@
 -- 2011-11-07 13:54:37.125627
 
 
-CREATE TABLE `album` (
+CREATE TABLE IF NOT EXISTS `album` (
   aid TEXT,
   object_id INTEGER,
   owner INTEGER,
@@ -25,7 +25,7 @@ CREATE TABLE `album` (
   video_count INTEGER
 );
 
-CREATE TABLE `application` (
+CREATE TABLE IF NOT EXISTS `application` (
   app_id TEXT,
   api_key TEXT,
   canvas_name TEXT,
@@ -44,7 +44,7 @@ CREATE TABLE `application` (
   restriction_info 
 );
 
-CREATE TABLE `apprequest` (
+CREATE TABLE IF NOT EXISTS `apprequest` (
   request_id TEXT,
   app_id TEXT,
   recipient_uid TEXT,
@@ -54,7 +54,7 @@ CREATE TABLE `apprequest` (
   created_time INTEGER
 );
 
-CREATE TABLE `checkin` (
+CREATE TABLE IF NOT EXISTS `checkin` (
   checkin_id INTEGER,
   author_uid INTEGER,
   page_id INTEGER,
@@ -66,7 +66,7 @@ CREATE TABLE `checkin` (
   message TEXT
 );
 
-CREATE TABLE `comment` (
+CREATE TABLE IF NOT EXISTS `comment` (
   xid TEXT,
   object_id INTEGER,
   post_id TEXT,
@@ -84,21 +84,21 @@ CREATE TABLE `comment` (
   is_private INTEGER
 );
 
-CREATE TABLE `comments_info` (
+CREATE TABLE IF NOT EXISTS `comments_info` (
   app_id TEXT,
   xid TEXT,
   count INTEGER,
   updated_time INTEGER
 );
 
-CREATE TABLE `connection` (
+CREATE TABLE IF NOT EXISTS `connection` (
   source_id INTEGER,
   target_id INTEGER,
   target_type TEXT,
   is_following INTEGER
 );
 
-CREATE TABLE `cookies` (
+CREATE TABLE IF NOT EXISTS `cookies` (
   uid TEXT,
   name TEXT,
   value TEXT,
@@ -106,22 +106,22 @@ CREATE TABLE `cookies` (
   path TEXT
 );
 
-CREATE TABLE `developer` (
+CREATE TABLE IF NOT EXISTS `developer` (
   developer_id TEXT,
   application_id TEXT
 );
 
-CREATE TABLE `domain` (
+CREATE TABLE IF NOT EXISTS `domain` (
   domain_id INTEGER,
   domain_name TEXT
 );
 
-CREATE TABLE `domain_admin` (
+CREATE TABLE IF NOT EXISTS `domain_admin` (
   owner_id TEXT,
   domain_id TEXT
 );
 
-CREATE TABLE `event` (
+CREATE TABLE IF NOT EXISTS `event` (
   eid INTEGER,
   name TEXT,
   tagline TEXT,
@@ -145,14 +145,14 @@ CREATE TABLE `event` (
   can_invite_friends INTEGER
 );
 
-CREATE TABLE `event_member` (
+CREATE TABLE IF NOT EXISTS `event_member` (
   uid TEXT,
   eid TEXT,
   rsvp_status TEXT,
   start_time INTEGER
 );
 
-CREATE TABLE `family` (
+CREATE TABLE IF NOT EXISTS `family` (
   profile_id TEXT,
   uid TEXT,
   name TEXT,
@@ -160,12 +160,12 @@ CREATE TABLE `family` (
   relationship TEXT
 );
 
-CREATE TABLE `friend` (
+CREATE TABLE IF NOT EXISTS `friend` (
   uid1 TEXT,
   uid2 TEXT
 );
 
-CREATE TABLE `friend_request` (
+CREATE TABLE IF NOT EXISTS `friend_request` (
   uid_to TEXT,
   uid_from TEXT,
   time INTEGER,
@@ -173,18 +173,18 @@ CREATE TABLE `friend_request` (
   unread INTEGER
 );
 
-CREATE TABLE `friendlist` (
+CREATE TABLE IF NOT EXISTS `friendlist` (
   owner INTEGER,
   flid TEXT,
   name TEXT
 );
 
-CREATE TABLE `friendlist_member` (
+CREATE TABLE IF NOT EXISTS `friendlist_member` (
   flid TEXT,
   uid INTEGER
 );
 
-CREATE TABLE `group` (
+CREATE TABLE IF NOT EXISTS `group` (
   gid INTEGER,
   name TEXT,
   nid INTEGER,
@@ -208,7 +208,7 @@ CREATE TABLE `group` (
   version INTEGER
 );
 
-CREATE TABLE `group_member` (
+CREATE TABLE IF NOT EXISTS `group_member` (
   uid TEXT,
   gid TEXT,
   administrator INTEGER,
@@ -217,14 +217,14 @@ CREATE TABLE `group_member` (
   bookmark_order INTEGER
 );
 
-CREATE TABLE `like` (
+CREATE TABLE IF NOT EXISTS `like` (
   object_id INTEGER,
   post_id TEXT,
   user_id INTEGER,
   object_type TEXT
 );
 
-CREATE TABLE `link` (
+CREATE TABLE IF NOT EXISTS `link` (
   link_id INTEGER,
   owner INTEGER,
   owner_comment TEXT,
@@ -236,7 +236,7 @@ CREATE TABLE `link` (
   image_urls 
 );
 
-CREATE TABLE `link_stat` (
+CREATE TABLE IF NOT EXISTS `link_stat` (
   url TEXT,
   normalized_url TEXT,
   share_count INTEGER,
@@ -248,7 +248,7 @@ CREATE TABLE `link_stat` (
   commentsbox_count INTEGER
 );
 
-CREATE TABLE `mailbox_folder` (
+CREATE TABLE IF NOT EXISTS `mailbox_folder` (
   folder_id TEXT,
   viewer_id TEXT,
   name TEXT,
@@ -256,7 +256,7 @@ CREATE TABLE `mailbox_folder` (
   total_count INTEGER
 );
 
-CREATE TABLE `message` (
+CREATE TABLE IF NOT EXISTS `message` (
   message_id TEXT,
   thread_id TEXT,
   author_id INTEGER,
@@ -266,7 +266,7 @@ CREATE TABLE `message` (
   viewer_id TEXT
 );
 
-CREATE TABLE `note` (
+CREATE TABLE IF NOT EXISTS `note` (
   uid INTEGER,
   note_id TEXT,
   created_time INTEGER,
@@ -276,7 +276,7 @@ CREATE TABLE `note` (
   title TEXT
 );
 
-CREATE TABLE `notification` (
+CREATE TABLE IF NOT EXISTS `notification` (
   notification_id TEXT,
   sender_id INTEGER,
   recipient_id INTEGER,
@@ -295,14 +295,14 @@ CREATE TABLE `notification` (
   icon_url TEXT
 );
 
-CREATE TABLE `object_url` (
+CREATE TABLE IF NOT EXISTS `object_url` (
   url TEXT,
   id INTEGER,
   type TEXT,
   site TEXT
 );
 
-CREATE TABLE `page` (
+CREATE TABLE IF NOT EXISTS `page` (
   page_id INTEGER,
   name TEXT,
   username TEXT,
@@ -371,18 +371,18 @@ CREATE TABLE `page` (
   mpg TEXT
 );
 
-CREATE TABLE `page_admin` (
+CREATE TABLE IF NOT EXISTS `page_admin` (
   uid TEXT,
   page_id TEXT,
   type TEXT
 );
 
-CREATE TABLE `page_blocked_user` (
+CREATE TABLE IF NOT EXISTS `page_blocked_user` (
   page_id TEXT,
   uid TEXT
 );
 
-CREATE TABLE `page_fan` (
+CREATE TABLE IF NOT EXISTS `page_fan` (
   uid INTEGER,
   page_id INTEGER,
   type TEXT,
@@ -390,13 +390,13 @@ CREATE TABLE `page_fan` (
   created_time INTEGER
 );
 
-CREATE TABLE `permissions_info` (
+CREATE TABLE IF NOT EXISTS `permissions_info` (
   permission_name TEXT,
   header TEXT,
   summary TEXT
 );
 
-CREATE TABLE `photo` (
+CREATE TABLE IF NOT EXISTS `photo` (
   pid TEXT,
   aid TEXT,
   owner TEXT,
@@ -419,7 +419,7 @@ CREATE TABLE `photo` (
   images 
 );
 
-CREATE TABLE `photo_tag` (
+CREATE TABLE IF NOT EXISTS `photo_tag` (
   pid TEXT,
   subject TEXT,
   object_id INTEGER,
@@ -429,7 +429,7 @@ CREATE TABLE `photo_tag` (
   created INTEGER
 );
 
-CREATE TABLE `place` (
+CREATE TABLE IF NOT EXISTS `place` (
   page_id INTEGER,
   name TEXT,
   description TEXT,
@@ -440,7 +440,7 @@ CREATE TABLE `place` (
   display_subtext TEXT
 );
 
-CREATE TABLE `privacy` (
+CREATE TABLE IF NOT EXISTS `privacy` (
   id INTEGER,
   object_id INTEGER,
   value TEXT,
@@ -452,7 +452,7 @@ CREATE TABLE `privacy` (
   friends TEXT
 );
 
-CREATE TABLE `privacy_setting` (
+CREATE TABLE IF NOT EXISTS `privacy_setting` (
   name TEXT,
   value TEXT,
   description TEXT,
@@ -462,7 +462,7 @@ CREATE TABLE `privacy_setting` (
   friends TEXT
 );
 
-CREATE TABLE `profile` (
+CREATE TABLE IF NOT EXISTS `profile` (
   id INTEGER,
   can_post INTEGER,
   name TEXT,
@@ -476,7 +476,7 @@ CREATE TABLE `profile` (
   username TEXT
 );
 
-CREATE TABLE `question` (
+CREATE TABLE IF NOT EXISTS `question` (
   id INTEGER,
   owner INTEGER,
   question TEXT,
@@ -484,7 +484,7 @@ CREATE TABLE `question` (
   updated_time INTEGER
 );
 
-CREATE TABLE `question_option` (
+CREATE TABLE IF NOT EXISTS `question_option` (
   id INTEGER,
   question_id TEXT,
   name TEXT,
@@ -494,12 +494,12 @@ CREATE TABLE `question_option` (
   created_time INTEGER
 );
 
-CREATE TABLE `question_option_votes` (
+CREATE TABLE IF NOT EXISTS `question_option_votes` (
   option_id INTEGER,
   voter_id INTEGER
 );
 
-CREATE TABLE `review` (
+CREATE TABLE IF NOT EXISTS `review` (
   reviewee_id INTEGER,
   reviewer_id INTEGER,
   review_id INTEGER,
@@ -508,12 +508,12 @@ CREATE TABLE `review` (
   rating INTEGER
 );
 
-CREATE TABLE `standard_friend_info` (
+CREATE TABLE IF NOT EXISTS `standard_friend_info` (
   uid1 INTEGER,
   uid2 INTEGER
 );
 
-CREATE TABLE `standard_user_info` (
+CREATE TABLE IF NOT EXISTS `standard_user_info` (
   uid TEXT,
   name TEXT,
   username TEXT,
@@ -531,7 +531,7 @@ CREATE TABLE `standard_user_info` (
   allowed_restrictions TEXT
 );
 
-CREATE TABLE `status` (
+CREATE TABLE IF NOT EXISTS `status` (
   uid INTEGER,
   status_id INTEGER,
   time INTEGER,
@@ -539,7 +539,7 @@ CREATE TABLE `status` (
   message TEXT
 );
 
-CREATE TABLE `stream` (
+CREATE TABLE IF NOT EXISTS `stream` (
   post_id TEXT,
   viewer_id INTEGER,
   app_id INTEGER,
@@ -566,7 +566,7 @@ CREATE TABLE `stream` (
   description_tags 
 );
 
-CREATE TABLE `stream_filter` (
+CREATE TABLE IF NOT EXISTS `stream_filter` (
   uid INTEGER,
   filter_key TEXT,
   name TEXT,
@@ -577,13 +577,13 @@ CREATE TABLE `stream_filter` (
   value INTEGER
 );
 
-CREATE TABLE `stream_tag` (
+CREATE TABLE IF NOT EXISTS `stream_tag` (
   post_id TEXT,
   actor_id TEXT,
   target_id TEXT
 );
 
-CREATE TABLE `thread` (
+CREATE TABLE IF NOT EXISTS `thread` (
   thread_id TEXT,
   folder_id TEXT,
   subject TEXT,
@@ -599,7 +599,7 @@ CREATE TABLE `thread` (
   viewer_id TEXT
 );
 
-CREATE TABLE `translation` (
+CREATE TABLE IF NOT EXISTS `translation` (
   locale TEXT,
   native_hash TEXT,
   native_string TEXT,
@@ -610,7 +610,7 @@ CREATE TABLE `translation` (
   best_string TEXT
 );
 
-CREATE TABLE `unified_message` (
+CREATE TABLE IF NOT EXISTS `unified_message` (
   message_id TEXT,
   thread_id TEXT,
   subject TEXT,
@@ -629,7 +629,7 @@ CREATE TABLE `unified_message` (
   share_map 
 );
 
-CREATE TABLE `unified_thread` (
+CREATE TABLE IF NOT EXISTS `unified_thread` (
   action_id TEXT,
   archived INTEGER,
   can_reply INTEGER,
@@ -656,7 +656,7 @@ CREATE TABLE `unified_thread` (
   unread INTEGER
 );
 
-CREATE TABLE `unified_thread_action` (
+CREATE TABLE IF NOT EXISTS `unified_thread_action` (
   action_id TEXT,
   actor ,
   thread_id TEXT,
@@ -665,7 +665,7 @@ CREATE TABLE `unified_thread_action` (
   users 
 );
 
-CREATE TABLE `unified_thread_count` (
+CREATE TABLE IF NOT EXISTS `unified_thread_count` (
   folder TEXT,
   unread_count INTEGER,
   unseen_count INTEGER,
@@ -674,12 +674,12 @@ CREATE TABLE `unified_thread_count` (
   total_threads INTEGER
 );
 
-CREATE TABLE `url_like` (
+CREATE TABLE IF NOT EXISTS `url_like` (
   user_id TEXT,
   url TEXT
 );
 
-CREATE TABLE `user` (
+CREATE TABLE IF NOT EXISTS `user` (
   uid INTEGER,
   username TEXT,
   first_name TEXT,
@@ -755,7 +755,7 @@ CREATE TABLE `user` (
   can_post INTEGER
 );
 
-CREATE TABLE `video` (
+CREATE TABLE IF NOT EXISTS `video` (
   vid INTEGER,
   owner INTEGER,
   album_id INTEGER,
@@ -771,7 +771,7 @@ CREATE TABLE `video` (
   src_hq TEXT
 );
 
-CREATE TABLE `video_tag` (
+CREATE TABLE IF NOT EXISTS `video_tag` (
   vid TEXT,
   subject INTEGER,
   updated_time INTEGER,

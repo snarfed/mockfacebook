@@ -46,7 +46,7 @@ class ServerTest(mox.MoxTestBase):
     warnings.filterwarnings('ignore', 'tempnam is a potential security risk')
     self.db_filename = os.tempnam('/tmp', 'mockfacebook_test.')
 
-    conn = testutil.make_test_db(self.db_filename)
+    conn = schemautil.make_test_db(self.db_filename)
     fql_test.insert_test_data(conn)
     graph_test.insert_test_data(conn)
     conn.close()
@@ -54,7 +54,7 @@ class ServerTest(mox.MoxTestBase):
     started = threading.Event()
     self.thread = threading.Thread(
       target=server.main,
-      args=(['--file', self.db_filename,
+      args=(['--db_file', self.db_filename,
              '--port', str(self.PORT),
              '--me', '1',
              ],),

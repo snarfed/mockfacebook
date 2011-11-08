@@ -19,19 +19,6 @@ import schemautil
 import server
 
 
-def make_test_db(filename):
-  """Teturns a SQLite db connection with the mockfacebook and FQL schemas.
-
-  Args:
-    filename: the SQLite database file
-  """
-  conn = sqlite3.connect(filename)
-  for schema in 'mockfacebook.sql', schemautil.FQL_SCHEMA_SQL_FILE:
-    with open(schema) as f:
-      conn.executescript(f.read())
-  return conn
-
-
 def maybe_read(dataset_cls):
   """Tries to read and return a dataset. If it fails, prints an error.
   """
@@ -55,7 +42,7 @@ class HandlerTest(unittest.TestCase):
     """
     super(HandlerTest, self).setUp()
 
-    self.conn = make_test_db(':memory:')
+    self.conn = schemautil.make_test_db(':memory:')
     for cls in handler_classes:
       cls.init(self.conn, self.ME)
 

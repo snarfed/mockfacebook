@@ -9,6 +9,7 @@ import datetime
 import json
 import pprint
 import re
+import sqlite3
 
 FQL_SCHEMA_PY_FILE = 'fql_schema.py'
 FQL_SCHEMA_SQL_FILE = 'fql_schema.sql'
@@ -28,6 +29,22 @@ SQL_HEADER = PY_HEADER.replace('#', '--')
 # TODO: other object types have aliases too?
 # e.g. http://graph.facebook.com/FarmVille
 ALIAS_FIELD = 'username'
+
+DEFAULT_DB_FILE = 'mockfacebook.db'
+
+def get_db(filename):
+  """Returns a SQLite db connection to the given file.
+
+  Also creates the mockfacebook and FQL schemas if they don't already exist.
+
+  Args:
+    filename: the SQLite database file
+  """
+  conn = sqlite3.connect(filename)
+  for schema in 'mockfacebook.sql', FQL_SCHEMA_SQL_FILE:
+    with open(schema) as f:
+      conn.executescript(f.read())
+  return conn
 
 
 def values_to_sqlite(input):
@@ -78,18 +95,27 @@ class PySqlFiles(object):
   def to_sql(self):
     pass
 
-  def write(self):
+  def write(self, db_file=None):
+    """Writes to the Python and optionally SQL and SQLite database files.
+
+    Args:
+      db_file: string, SQLite database filename
+    """
     with open(self.py_file, 'w') as f:
       print >> f, PY_HEADER
       data = dict((attr, getattr(self, attr)) for attr in self.py_attrs)
       pprint.pprint(data, f)
     self.wrote_message(self.py_file)
 
+    sql = self.to_sql()
     if self.sql_file:
       with open(self.sql_file, 'w') as f:
         print >> f, SQL_HEADER
-        print >> f, self.to_sql()
+        print >> f, sql
       self.wrote_message(self.sql_file)
+
+    if db_file:
+      get_db(db_file).executescript(sql)      
 
   @classmethod
   def read(cls):
@@ -153,7 +179,7 @@ class Schema(PySqlFiles):
     for table, cols in sorted(self.tables.items()):
       cols_str = ',\n'.join('  %s %s' % (c.name, c.sqlite_type) for c in cols)
       tables.append("""
-CREATE TABLE `%s` (
+CREATE TABLE IF NOT EXISTS `%s` (
 %s
 );
 """ % (table, cols_str))
