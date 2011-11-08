@@ -45,7 +45,7 @@ class OAuthHandlerTest(testutil.HandlerTest):
   def expect_oauth_redirect(self, redirect_re='http://x/y\?code=(.+)'):
     """Requests an access code, checks the redirect, and returns the code.
     """
-    resp = self.get_response('/dialog/oauth/', args=self.auth_code_args)
+    resp = self.get_response('/dialog/oauth', args=self.auth_code_args)
     self.assertEquals('302 Moved Temporarily', resp.status)
     location = resp.headers['Location']
     match = re.match(redirect_re, location)
@@ -81,7 +81,7 @@ class OAuthHandlerTest(testutil.HandlerTest):
 
   def test_access_token_nonexistent_auth_code(self):
     self.access_token_args['code'] = 'xyz'
-    resp = self.get_response('/oauth/access_token', args=self.access_token_args)
+    resp = self.get_response('/oauth/access_token/', args=self.access_token_args)
     assert 'not found' in resp.body
 
   def test_nonexistent_access_token(self):

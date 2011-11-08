@@ -1,6 +1,6 @@
 # Do not edit! Generated automatically by mockfacebook.
 # http://code.google.com/p/mockfacebook/
-# 2011-11-07 13:54:37.125627
+# 2011-11-08 09:12:04.346151
 
 {'connections': {u'album': [u'photos', u'likes', u'comments'],
                  u'application': [u'feed',

@@ -528,7 +528,6 @@ def fetch_graph_schema_and_data(ids):
 
   conn_paths = [urlparse.urlparse(url).path
                 for name, url in connections if name not in UNSUPPORTED_CONNECTIONS]
-  conn_paths = list(itertools.chain(conn_paths))  # flatten
   results = batch_request(conn_paths, args={'limit': options.num_per_type})
 
   # store the connections in the dataset

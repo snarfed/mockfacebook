@@ -18,13 +18,25 @@ import fql
 import schemautil
 import testutil
 
-SCHEMA = schemautil.FqlSchema.read()
+
+def insert_test_data(conn):
+  """Args:
+    conn: SQLite connection
+  """
+  conn.executescript("""
+INSERT INTO profile(id, username, can_post, pic_crop)
+  VALUES(1, 'alice', 1, '{"right": 1, "bottom": 2, "uri": "http://picture/url"}');
+INSERT INTO page(name, categories) VALUES('my_page', '["foo", "bar"]');
+""")
+  conn.commit()
 
 
 class FqlTest(unittest.TestCase):
 
+  schema = schemautil.FqlSchema.read()
+
   def fql(self, query):
-    return fql.Fql(SCHEMA, query, 1)
+    return fql.Fql(self.schema, query, 1)
 
   def test_table(self):
     self.assertEquals(None, self.fql('SELECT *').table)
@@ -48,18 +60,7 @@ class FqlHandlerTest(testutil.HandlerTest):
 
   def setUp(self):
     super(FqlHandlerTest, self).setUp(fql.FqlHandler)
-    self.conn.executescript(SCHEMA.to_sql())
-
-    self.alice = {'id': '1', 'foo': 'bar'}
-    self.bob = {'id': '2', 'inner': {'foo': 'baz'}}
-    self.alice_albums = {'data': [{'id': '3'}, {'id': '4'}]}
-    self.bob_albums = {'data': [{'id': '5'}]}
-    self.conn.executescript("""
-INSERT INTO profile(id, username, can_post, pic_crop)
-  VALUES(1, 'alice', 1, '{"right": 1, "bottom": 2, "uri": "http://picture/url"}');
-INSERT INTO page(name, categories) VALUES('my_page', '["foo", "bar"]');
-""")
-    self.conn.commit()
+    insert_test_data(self.conn)
 
   def expect_fql(self, fql, expected, format='json'):
     """Runs an FQL query and checks the response.

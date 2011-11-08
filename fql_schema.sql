@@ -250,7 +250,7 @@ CREATE TABLE `link_stat` (
 
 CREATE TABLE `mailbox_folder` (
   folder_id TEXT,
-  viewer_id INTEGER,
+  viewer_id TEXT,
   name TEXT,
   unread_count INTEGER,
   total_count INTEGER

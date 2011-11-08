@@ -13,6 +13,22 @@ import schemautil
 import testutil
 
 
+def insert_test_data(conn):
+  """Args:
+    conn: SQLite connection
+  """
+  conn.executescript("""
+INSERT INTO graph_objects VALUES('1', 'alice', '{"id": "1", "foo": "bar"}');
+INSERT INTO graph_objects VALUES('2', 'bob', '{"id": "2", "inner": {"foo": "baz"}}');
+INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "3"}');
+INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "4"}');
+INSERT INTO graph_connections VALUES('2', 'albums', '{"id": "5"}');
+INSERT INTO graph_connections VALUES('1', 'picture', '"http://alice/picture"');
+INSERT INTO graph_connections VALUES('2', 'picture', '"http://bob/picture"');
+""")
+  conn.commit()
+
+
 class TestBase(testutil.HandlerTest):
 
   dataset = testutil.maybe_read(schemautil.GraphDataset)
@@ -23,17 +39,7 @@ class TestBase(testutil.HandlerTest):
     self.bob = {'id': '2', 'inner': {'foo': 'baz'}}
     self.alice_albums = {'data': [{'id': '3'}, {'id': '4'}]}
     self.bob_albums = {'data': [{'id': '5'}]}
-
-    self.conn.executescript("""
-INSERT INTO graph_objects VALUES('1', 'alice', '{"id": "1", "foo": "bar"}');
-INSERT INTO graph_objects VALUES('2', 'bob', '{"id": "2", "inner": {"foo": "baz"}}');
-INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "3"}');
-INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "4"}');
-INSERT INTO graph_connections VALUES('2', 'albums', '{"id": "5"}');
-INSERT INTO graph_connections VALUES('1', 'picture', '"http://alice/picture"');
-INSERT INTO graph_connections VALUES('2', 'picture', '"http://bob/picture"');
-""")
-    self.conn.commit()
+    insert_test_data(self.conn)
 
   def _test_example_data(self, data):
     """Args:
@@ -152,8 +158,7 @@ class ConnectionTest(TestBase):
     for path in ('/alice/picture',
                  '/picture?ids=alice',
                  '//picture?ids=alice,bob'):
-      expected = 'http://alice/picture'
-      self.expect_redirect(path, expected)
+      self.expect_redirect(path, 'http://alice/picture')
 
 
 if __name__ == '__main__':

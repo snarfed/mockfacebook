@@ -128,7 +128,7 @@ class AuthCodeHandler(BaseHandler):
     redirect_parts = list(urlparse.urlparse(redirect_uri))
     if response_type == 'token':
       # client side flow. get an access token and put it in the fragment of the
-      # redirect URI. background:
+      # redirect URI. (also uses expires_in, not expires.) background:
       # http://developers.facebook.com/docs/authentication/#client-side-flow
       token = self.create_access_token(code, client_id, redirect_uri)
       if redirect_parts[5]:
@@ -190,4 +190,5 @@ class AccessTokenHandler(BaseHandler):
       self.response.out.write(
           urllib.urlencode({'access_token': token, 'expires': EXPIRES}))
     except AssertionError, e:
+      logging.exception('Error: ')
       raise exc.HTTPClientError(unicode(e).encode('utf8'))

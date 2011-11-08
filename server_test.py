@@ -13,11 +13,14 @@ import threading
 import unittest
 import urllib
 import urllib2
+import urlparse
 import warnings
 import wsgiref
 
 import mox
 
+import fql_test
+import graph_test
 import server
 import testutil
 
@@ -31,7 +34,7 @@ class ServerTest(mox.MoxTestBase):
     thread: Thread running the server
   """
 
-  port = 60001
+  port = 60000
 
   @classmethod
   def start_server(cls):
@@ -39,15 +42,19 @@ class ServerTest(mox.MoxTestBase):
     """
     warnings.filterwarnings('ignore', 'tempnam is a potential security risk')
     cls.db_filename = os.tempnam('/tmp', 'mockfacebook_test.')
-    testutil.make_test_db(cls.db_filename).close()
     ServerTest.port += 1
+
+    conn = testutil.make_test_db(cls.db_filename)
+    fql_test.insert_test_data(conn)
+    graph_test.insert_test_data(conn)
+    conn.close()
 
     started = threading.Event()
     cls.thread = threading.Thread(
       target=server.main,
       args=(['--file', cls.db_filename,
              '--port', str(ServerTest.port),
-             '--me', '%d' % testutil.ME,
+             '--me', '1',
              ],),
       kwargs={'started': started})
     cls.thread.start()
@@ -66,46 +73,52 @@ class ServerTest(mox.MoxTestBase):
     except:
       pass
 
-  def request(self, path, args, expected):
-    """Makes an HTTP request.
+  def expect(self, path, args, expected):
+    """Makes an HTTP request and checks the result.
 
     Args:
       path: string
       args: dict mapping string to string
-      expected: string response
+      expected: string or regexp, or None
+
+    Returns:
+      string response
     """
     url = 'http://localhost:%d%s?%s' % (self.port, path, urllib.urlencode(args))
-    self.assertEquals(expected, urllib2.urlopen(url).read())
+    resp = urllib2.urlopen(url).read()
+    if expected:
+      self.assertEquals(expected, resp)
+    return resp
 
   def test_fql(self):
-    args = {'query': 'SELECT username, name FROM profile WHERE id = me()',
-            'format': 'json'}
-    self.request('/method/fql.query', args,
-                 '[{"username": "snarfed.org", "name": "Ryan Barrett"}]')
+    query = 'SELECT username FROM profile WHERE id = me()'
+    expected = '[{"username": "alice"}]'
+    self.expect('/method/fql.query', {'query': query, 'format': 'json'}, expected)
+    self.expect('/fql', {'q': query}, expected)
 
   def test_graph(self):
-    self.request(
-      '/10150150038100285', {},
-      '{"type": "domain", "id": "10150150038100285", "name": "snarfed.org"}')
+    self.expect('/1', {}, '{"foo": "bar", "id": "1"}')
+    self.expect('/bob/albums', {}, '{"data": [{"id": "5"}]}')
 
   def test_oauth(self):
     args = {'client_id': 'x',
             'client_secret': 'y',
             'redirect_uri': 'http://localhost:%d/placeholder' % self.port,
-            'response_type': 'token',
             }
+    try:
+      self.expect('/dialog/oauth', args, None)
+      self.fail('Expected 404 not found on placeholder redirect')
+    except urllib2.HTTPError, e:
+      self.assertEquals(404, e.code)
+      url = e.url
 
-    resp = self.request('/dialog/oauth', args, '')
-    # fail('Should have raised HTTPError')
-    # except urllib2.HTTPError, e:
-    #   redirect = e.geturl()
-    self.assertEquals(302, resp.status_int)
-    redirect = resp.headers['Location']
-    assert re.search('#access_token=.+&expires_in=999999$', redirect), redirect
+    args['code'] = urlparse.parse_qs(urlparse.urlparse(url).query)['code'][0]
+    resp = self.expect('/oauth/access_token', args, None)
+    assert re.match('access_token=.+&expires=999999', resp), resp
 
   def test_404(self):
     try:
-      resp = self.request('/not_found', {}, '')
+      resp = self.expect('/not_found', {}, '')
       fail('Should have raised HTTPError')
     except urllib2.HTTPError, e:
       self.assertEquals(404, e.code)

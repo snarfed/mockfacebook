@@ -20,14 +20,15 @@ import server
 
 
 def make_test_db(filename):
-  """Returns a SQLite db connection with the FQL schema and example data.
+  """Teturns a SQLite db connection with the mockfacebook and FQL schemas.
 
   Args:
-    filename: the SQLite database file.
+    filename: the SQLite database file
   """
   conn = sqlite3.connect(filename)
-  with open('mockfacebook.sql') as f:
-    conn.executescript(f.read())
+  for schema in 'mockfacebook.sql', schemautil.FQL_SCHEMA_SQL_FILE:
+    with open(schema) as f:
+      conn.executescript(f.read())
   return conn
 
 
@@ -54,7 +55,7 @@ class HandlerTest(unittest.TestCase):
     """
     super(HandlerTest, self).setUp()
 
-    HandlerTest.conn = make_test_db(':memory:')
+    self.conn = make_test_db(':memory:')
     for cls in handler_classes:
       cls.init(self.conn, self.ME)
 

@@ -38,7 +38,6 @@ http://developers.facebook.com/blog/post/429/
 
 
 TODO before release:
-- both fql endpoints
 - server db file handling
 - test server
 - readme, including get sqlparse package or dl/symlink, http://code.google.com/p/python-sqlparse/
@@ -56,6 +55,7 @@ TODO before release:
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']
 
+import itertools
 import logging
 import optparse
 import sqlite3
@@ -86,7 +86,7 @@ HANDLER_CLASSES = (
 def application():
   """Returns the WSGIApplication to run.
   """
-  routes = reduce(lambda x, y: x + y, [cls.ROUTES for cls in HANDLER_CLASSES])
+  routes = list(itertools.chain(*[cls.ROUTES for cls in HANDLER_CLASSES]))
   return webapp2.WSGIApplication(routes, debug=True)
 
 
@@ -102,7 +102,7 @@ def parse_args(argv):
   parser.add_option('--me', type='int', default=0,
                     help='user id that me() should return (default 0)')
 
-  (options, args) = parser.parse_args(args=argv)
+  options, args = parser.parse_args(args=argv)
   logging.debug('Command line options: %s' % options)
 
 
@@ -116,7 +116,7 @@ def main(args, started=None):
 
   conn = sqlite3.connect(options.file)
   fql.FqlHandler.init(conn, options.me)
-  graph.BaseHandler.init(conn, options.me)
+  graph.GraphHandler.init(conn, options.me)
   oauth.BaseHandler.init(conn)
 
   global server  # for server_test.ServerTest
