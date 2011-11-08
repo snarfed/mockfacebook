@@ -38,13 +38,10 @@ http://developers.facebook.com/blog/post/429/
 
 
 TODO before release:
-- separate full data unit tests
-- new db each time except for all data tests
-- no double slashes for connection first
-- server db file handling
-- readme, including get sqlparse package or dl/symlink, http://code.google.com/p/python-sqlparse/
 - both fql endpoints
+- server db file handling
 - test server
+- readme, including get sqlparse package or dl/symlink, http://code.google.com/p/python-sqlparse/
 
 - parallelize fql schema scrape http requests
 - require locale and either native_hash or pre_hash_string for translation table:
@@ -82,8 +79,7 @@ HANDLER_CLASSES = (
   oauth.AuthCodeHandler,
   oauth.AccessTokenHandler,
   fql.FqlHandler,
-  graph.ObjectHandler,
-  graph.ConnectionHandler,
+  graph.GraphHandler,
   )
 
 

@@ -129,10 +129,12 @@ def is_int(str):
 not_int = lambda str: not is_int(str)
 
 
-class BaseHandler(webapp2.RequestHandler):
-  """Base handler class for Graph API handlers.
+class GraphHandler(webapp2.RequestHandler):
+  """Request handler class for Graph API handlers.
 
-  Subclass should override _get(), *not* get().
+  This is a single class, instead of separate classes for objects and
+  connections, because /xyz?... could be either an object or connection request
+  depending on what xyz is.
 
   Class attributes:
     conn: sqlite3.Connection
@@ -140,6 +142,8 @@ class BaseHandler(webapp2.RequestHandler):
     schema: schemautil.GraphSchema
     all_connections: set of all string connection names
   """
+
+  ROUTES = [webapp2.Route('/<id:[^/]*><connection:(/[^/]*)?>', 'graph.GraphHandler')]
 
   @classmethod
   def init(cls, conn, me):
@@ -152,24 +156,25 @@ class BaseHandler(webapp2.RequestHandler):
     cls.schema = schemautil.GraphSchema.read()
     cls.all_connections = reduce(set.union, cls.schema.connections.values(), set())
 
-  def _get(self, namedict, **kwargs):
-    """Returns a dict mapping string id to string response.
-
-    Subclasses should override this.
-
-    Args:
-      namedict: NameDict
-    """
-    raise NotImplementedError()
-
-  def get(self, id, **kwargs):
+  def get(self, id, connection):
     """Handles GET requests.
     """
     self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
 
+    if connection:
+      connection = connection[1:]  # strip the leading slash
+    elif id in self.all_connections:
+      connection = id
+      id = None
+
     try:
       namedict = self.prepare_ids(id)
-      resp = self._get(namedict, **kwargs)
+
+      if connection:
+        resp = self.get_connections(namedict, connection)
+      else:
+        resp = self.get_objects(namedict)
+
       if namedict.single:
         if not resp:
           resp = []
@@ -180,9 +185,37 @@ class BaseHandler(webapp2.RequestHandler):
 
     except GraphError, e:
       # i don't use webapp2's handle_exception() because there's no way to get
-      # the original exception's traceback.
+      # the original exception's traceback, which makes testing difficult.
       self.response.write(e.message)
       self.response.set_status(e.status)
+
+
+  def get_objects(self, namedict):
+    ids = namedict.keys()
+    cursor = self.conn.execute(
+      'SELECT id, data FROM graph_objects WHERE id IN (%s)' % self.qmarks(ids),
+      ids)
+    return dict((namedict[id], json.loads(data))
+                for id, data in cursor.fetchall())
+
+  def get_connections(self, namedict, connection):
+    if connection not in self.all_connections:
+      raise UnknownPathError(connection)
+
+    ids = namedict.keys()
+    query = ('SELECT id, data FROM graph_connections '
+               'WHERE id IN (%s) AND connection = ?' % self.qmarks(ids))
+    cursor = self.conn.execute(query, ids + [connection])
+    rows = cursor.fetchall()
+
+    if connection == REDIRECT_CONNECTION and rows:
+      self.redirect(json.loads(rows[0][1]), abort=True)  # this raises
+
+    resp = dict((name, {'data': []}) for name in namedict.values())
+    for id, data in rows:
+      resp[namedict[id]]['data'].append(json.loads(data))
+
+    return resp
 
   def prepare_ids(self, path_id):
     """Returns the id(s) for this request.
@@ -245,44 +278,3 @@ class BaseHandler(webapp2.RequestHandler):
     """Returns a '?, ?, ...' string with a question mark per value.
     """
     return ','.join('?' * len(values))
-
-
-class ObjectHandler(BaseHandler):
-  """Serves objects.
-  """
-
-  ROUTES = [webapp2.Route('/<id:[^/]*>', 'graph.ObjectHandler')]
-
-  def _get(self, namedict):
-    ids = namedict.keys()
-    cursor = self.conn.execute(
-      'SELECT id, data FROM graph_objects WHERE id IN (%s)' % self.qmarks(ids),
-      ids)
-    return dict((namedict[id], json.loads(data))
-                for id, data in cursor.fetchall())
-
-
-class ConnectionHandler(BaseHandler):
-  """Serves connections.
-  """
-
-  ROUTES = [webapp2.Route('/<id:[^/]*>/<connection>', 'graph.ConnectionHandler')]
-
-  def _get(self, namedict, connection=None):
-    if connection not in self.all_connections:
-      raise UnknownPathError(connection)
-
-    ids = namedict.keys()
-    query = ('SELECT id, data FROM graph_connections '
-               'WHERE id IN (%s) AND connection = ?' % self.qmarks(ids))
-    cursor = self.conn.execute(query, ids + [connection])
-    rows = cursor.fetchall()
-
-    if connection == REDIRECT_CONNECTION and rows:
-      self.redirect(json.loads(rows[0][1]), abort=True)  # this raises
-
-    resp = dict((name, {'data': []}) for name in namedict.values())
-    for id, data in rows:
-      resp[namedict[id]]['data'].append(json.loads(data))
-
-    return resp

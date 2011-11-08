@@ -41,7 +41,7 @@ INSERT INTO graph_connections VALUES('2', 'picture', '"http://bob/picture"');
     """
     self.conn.executescript(self.dataset.to_sql())
     self.conn.commit()
-    graph.ObjectHandler.me = self.dataset.data['me'].data['id']
+    graph.GraphHandler.me = self.dataset.data['me'].data['id']
     for datum in data:
       self.expect('/%s' % datum.query, datum.data)
 
@@ -61,7 +61,7 @@ INSERT INTO graph_connections VALUES('2', 'picture', '"http://bob/picture"');
 class ObjectTest(TestBase):
 
   def setUp(self):
-    super(ObjectTest, self).setUp(graph.ObjectHandler)
+    super(ObjectTest, self).setUp(graph.GraphHandler)
 
   def test_example_data(self):
     if self.dataset:
@@ -112,7 +112,7 @@ class ObjectTest(TestBase):
 class ConnectionTest(TestBase):
 
   def setUp(self):
-    super(ConnectionTest, self).setUp(graph.ConnectionHandler)
+    super(ConnectionTest, self).setUp(graph.GraphHandler)
 
   def test_example_data(self):
     if self.dataset:
@@ -142,12 +142,12 @@ class ConnectionTest(TestBase):
     self.expect('//family?ids=alice', {'alice': {'data': []}})
 
   def test_ids_query_param(self):
-    self.expect('//albums?ids=alice,bob',
+    self.expect('/albums?ids=alice,bob',
                 {'alice': self.alice_albums, 'bob': self.bob_albums})
 
   def test_picture_redirect(self):
     for path in ('/alice/picture',
-                 '//picture?ids=alice',
+                 '/picture?ids=alice',
                  '//picture?ids=alice,bob'):
       expected = 'http://alice/picture'
       self.expect_redirect(path, expected)
