@@ -22,11 +22,9 @@ SCHEMA = schemautil.FqlSchema.read()
 
 
 class FqlTest(unittest.TestCase):
-  """Tests the Fql class.
-  """
 
   def fql(self, query):
-    return fql.Fql(SCHEMA, query, testutil.ME)
+    return fql.Fql(SCHEMA, query, 1)
 
   def test_table(self):
     self.assertEquals(None, self.fql('SELECT *').table)
@@ -47,12 +45,20 @@ class FqlTest(unittest.TestCase):
 
 
 class FqlHandlerTest(testutil.HandlerTest):
-  """Tests FqlHandler with the data in fql_data.sql and fql_data.py.
-  """
 
   def setUp(self):
     super(FqlHandlerTest, self).setUp(fql.FqlHandler)
     self.conn.executescript(SCHEMA.to_sql())
+
+    self.alice = {'id': '1', 'foo': 'bar'}
+    self.bob = {'id': '2', 'inner': {'foo': 'baz'}}
+    self.alice_albums = {'data': [{'id': '3'}, {'id': '4'}]}
+    self.bob_albums = {'data': [{'id': '5'}]}
+    self.conn.executescript("""
+INSERT INTO profile(id, username, can_post, pic_crop)
+  VALUES(1, 'alice', 1, '{"right": 1, "bottom": 2, "uri": "http://picture/url"}');
+INSERT INTO page(name, categories) VALUES('my_page', '["foo", "bar"]');
+""")
     self.conn.commit()
 
   def expect_fql(self, fql, expected, format='json'):
@@ -106,19 +112,16 @@ class FqlHandlerTest(testutil.HandlerTest):
 
   def test_multiple_where_conditions(self):
     self.expect_fql(
-      'SELECT username FROM profile WHERE id = me() AND username = "snarfed.org"',
-      [{'username': 'snarfed.org'}])
+      'SELECT username FROM profile WHERE id = me() AND username = "alice"',
+      [{'username': 'alice'}])
 
   def test_me_function(self):
-    queries = ['SELECT username FROM %s = me()' % clause
-               for clause in ('user WHERE uid', 'profile WHERE id')]
-    for query in queries:
-      self.expect_fql(query, [{'username': 'snarfed.org'}])
+    query = 'SELECT username FROM profile WHERE id = me()'
+    self.expect_fql(query, [{'username': 'alice'}])
 
     # try a different value for me()
-    fql.FqlHandler.init(self.conn, testutil.ME + 1)
-    for query in queries:
-      self.expect_fql(query, [])
+    fql.FqlHandler.init(self.conn, int(self.ME) + 1)
+    self.expect_fql(query, [])
 
   def test_now_function(self):
     orig_time = time.time
@@ -133,7 +136,7 @@ class FqlHandlerTest(testutil.HandlerTest):
     self.expect_fql('SELECT strlen("asdf") FROM profile WHERE id = me()',
                     [{'length("asdf")': 4}])
     self.expect_fql('SELECT strlen(username) FROM profile WHERE id = me()',
-                    [{'length(username)': 11}])
+                    [{'length(username)': 5}])
 
     self.expect_error('SELECT strlen() FROM profile WHERE id = me()',
                       fql.ParamMismatchError('strlen', 1, 0))
@@ -158,22 +161,17 @@ class FqlHandlerTest(testutil.HandlerTest):
     self.expect_error('SELECT strpos("asdf") FROM profile WHERE id = me()',
                       fql.ParamMismatchError('strpos', 2, 1))
 
-  def test_composite_fql_types(self):
+  def test_fql_types(self):
     # array
-    self.expect_fql('SELECT meeting_sex FROM user WHERE uid = me()',
-                    [{'meeting_sex': ['female']}])
-    # comments
-    self.expect_fql('SELECT comments FROM comment WHERE object_id = 130490263692746',
-                    [{'comments': []}, {'comments': []}])
+    self.expect_fql('SELECT categories FROM page WHERE name = "my_page"',
+                    [{'categories': ['foo', 'bar']}])
+    # bool
+    self.expect_fql('SELECT can_post FROM profile WHERE id = me()',
+                    [{'can_post': True}])
     # object
-    self.expect_fql('SELECT venue FROM group WHERE gid = 13243224451',
-                    [{'venue': {'city': 'West Portland',
-                                'country': 'United States',
-                                'longitude': -122.73099999999999,
-                                'state': 'Oregon',
-                                'street': '',
-                                'latitude': 45.454999999999998,
-                                }}])
+    self.expect_fql(
+      'SELECT pic_crop FROM profile WHERE id = me()',
+      [{'pic_crop': {"right": 1, "bottom": 2, "uri": "http://picture/url"}}])
 
   def test_non_indexable_column_error(self):
     self.expect_error('SELECT id FROM profile WHERE pic = "http://url.to/image"',
@@ -184,17 +182,14 @@ class FqlHandlerTest(testutil.HandlerTest):
 
   def test_xml_format(self):
     self.expect_fql(
-      'SELECT id, name, url, type, username FROM profile WHERE id = me()',
+      'SELECT id, username FROM profile WHERE id = me()',
       """<?xml version="1.0" encoding="UTF-8"?>
 <fql_query_response xmlns="http://api.facebook.com/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" list="true">
 <profile>
-<url>http://www.facebook.com/snarfed.org</url>
-<username>snarfed.org</username>
-<type>user</type>
-<id>%d</id>
-<name>Ryan Barrett</name>
+<username>alice</username>
+<id>%s</id>
 </profile>
-</fql_query_response>""" % testutil.ME,
+</fql_query_response>""" % self.ME,
       format='xml')
 
   def test_format_defaults_to_xml(self):
@@ -204,7 +199,7 @@ class FqlHandlerTest(testutil.HandlerTest):
         """<?xml version="1.0" encoding="UTF-8"?>
 <fql_query_response xmlns="http://api.facebook.com/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" list="true">
 <profile>
-<username>snarfed.org</username>
+<username>alice</username>
 </profile>
 </fql_query_response>""",
         format=format)
