@@ -139,7 +139,8 @@ OVERRIDE_COLUMN_TYPES = collections.defaultdict(dict, {
     'group': {'version': 'int', },
     'group_member': {'positions': 'object', },
     'link': {'link_id': 'int', },
-    'like': {'object_id': 'int', }, #'version': 'int', },
+    'like': {'object_id': 'int', },
+    'mailbox_folder': {'viewer_id': 'string', },
     'page': {'hours': 'object', 'is_community_page': 'boolean',
              'location': 'object', 'parking': 'object', },
     'page_fan': {'uid': 'int', 'page_id': 'int', },
@@ -153,7 +154,7 @@ OVERRIDE_COLUMN_TYPES = collections.defaultdict(dict, {
     'privacy': {'id': 'int', 'object_id': 'int', },
     'profile': {'pic_crop': 'object', },
     'status': {'status_id': 'int', 'source': 'int', 'time': 'int', },
-    'stream': {'actor_id': 'int', },
+    'stream': {'actor_id': 'int', 'target_id': int, },
     'stream_filter': {'uid': 'int', },
     'user': {'timezone': 'int', },
     'video': {'vid': 'int', },
@@ -432,6 +433,14 @@ def fetch_fql_data(schema):
   print_and_flush('Generating FQL example data')
   dataset = schemautil.FqlDataset(schema)
   where_clauses = FQL_DATA_WHERE_CLAUSES
+
+  # preprocess where clauses. inject limits into subselects so that they return
+  # the same results when querying the example data later, since it only has
+  # the rows we downloaded.
+  for table, query in where_clauses.items():
+    if query:
+      where_clauses[table] = re.sub(
+        '([^(])\)$', '\\1 LIMIT %d)' % options.num_per_type, query)
 
   # build FQL queries. this dict maps url to (table, query) tuple.
   urls = {}

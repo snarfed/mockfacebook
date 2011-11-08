@@ -283,6 +283,8 @@ class FqlDataset(Dataset):
   """An FQL dataset.
   """
   def __init__(self, schema=None):
+    if not schema:
+      schema = FqlSchema.read()
     super(FqlDataset, self).__init__(FQL_DATA_PY_FILE, FQL_DATA_SQL_FILE, schema)
 
   def to_sql(self):
@@ -324,6 +326,8 @@ class GraphDataset(Dataset):
   py_attrs = ('data', 'connections')
 
   def __init__(self, schema=None):
+    if not schema:
+      schema = GraphSchema.read()
     super(GraphDataset, self).__init__(GRAPH_DATA_PY_FILE, GRAPH_DATA_SQL_FILE,
                                        schema)
     self.connections = {}

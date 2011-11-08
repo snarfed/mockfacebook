@@ -5,7 +5,6 @@
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']
 
 import re
-import sys
 import traceback
 import unittest
 
@@ -16,6 +15,8 @@ import testutil
 
 class TestBase(testutil.HandlerTest):
 
+  dataset = testutil.maybe_read(schemautil.GraphDataset)
+
   def setUp(self, *args):
     super(TestBase, self).setUp(*args)
     self.alice = {'id': '1', 'foo': 'bar'}
@@ -24,11 +25,8 @@ class TestBase(testutil.HandlerTest):
     self.bob_albums = {'data': [{'id': '5'}]}
 
     self.conn.executescript("""
-DELETE FROM graph_objects;
 INSERT INTO graph_objects VALUES('1', 'alice', '{"id": "1", "foo": "bar"}');
 INSERT INTO graph_objects VALUES('2', 'bob', '{"id": "2", "inner": {"foo": "baz"}}');
-
-DELETE FROM graph_connections;
 INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "3"}');
 INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "4"}');
 INSERT INTO graph_connections VALUES('2', 'albums', '{"id": "5"}');
@@ -36,6 +34,16 @@ INSERT INTO graph_connections VALUES('1', 'picture', '"http://alice/picture"');
 INSERT INTO graph_connections VALUES('2', 'picture', '"http://bob/picture"');
 """)
     self.conn.commit()
+
+  def _test_example_data(self, data):
+    """Args:
+      data: list of Data or Connection with url paths and expected results
+    """
+    self.conn.executescript(self.dataset.to_sql())
+    self.conn.commit()
+    graph.ObjectHandler.me = self.dataset.data['me'].data['id']
+    for datum in data:
+      self.expect('/%s' % datum.query, datum.data)
 
   def expect_redirect(self, path, redirect_to):
     resp = self.get_response(path)
@@ -55,11 +63,18 @@ class ObjectTest(TestBase):
   def setUp(self):
     super(ObjectTest, self).setUp(graph.ObjectHandler)
 
+  def test_example_data(self):
+    if self.dataset:
+      self._test_example_data(self.dataset.data.values())
+
   def test_id(self):
     self.expect('/1', self.alice)
 
   def test_alias(self):
     self.expect('/alice', self.alice)
+
+  def test_me(self):
+    self.expect('/me', self.alice)
 
   def test_not_found(self):
     self.expect_error('/9', graph.ObjectNotFoundError())
@@ -99,11 +114,19 @@ class ConnectionTest(TestBase):
   def setUp(self):
     super(ConnectionTest, self).setUp(graph.ConnectionHandler)
 
+  def test_example_data(self):
+    if self.dataset:
+      self._test_example_data(conn for conn in self.dataset.connections.values()
+                              if conn.name != graph.REDIRECT_CONNECTION)
+
   def test_id(self):
     self.expect('/1/albums', self.alice_albums)
 
   def test_alias(self):
     self.expect('/alice/albums', self.alice_albums)
+
+  def test_me(self):
+    self.expect('/me/albums', self.alice_albums)
 
   def test_id_not_found(self):
     self.expect('/9/albums', 'false')

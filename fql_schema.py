@@ -179,7 +179,7 @@
                           Column(name='comments_fbid', fb_type='int', sqlite_type='INTEGER', indexable=False),
                           Column(name='commentsbox_count', fb_type='int', sqlite_type='INTEGER', indexable=False)),
             'mailbox_folder': (Column(name='folder_id', fb_type='string', sqlite_type='TEXT', indexable=True),
-                               Column(name='viewer_id', fb_type='int', sqlite_type='INTEGER', indexable=True),
+                               Column(name='viewer_id', fb_type='int', sqlite_type='TEXT', indexable=True),
                                Column(name='name', fb_type='string', sqlite_type='TEXT', indexable=False),
                                Column(name='unread_count', fb_type='int', sqlite_type='INTEGER', indexable=False),
                                Column(name='total_count', fb_type='int', sqlite_type='INTEGER', indexable=False)),

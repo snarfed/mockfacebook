@@ -18,9 +18,6 @@ import webapp2
 import schemautil
 import server
 
-# The me() user id in the publishable example data used for testing.
-ME = 212038
-
 
 def make_test_db(filename):
   """Returns a SQLite db connection with the FQL schema and example data.
@@ -29,19 +26,26 @@ def make_test_db(filename):
     filename: the SQLite database file.
   """
   conn = sqlite3.connect(filename)
-
-  for file in ('mockfacebook.sql', schemautil.FQL_SCHEMA_SQL_FILE,
-               schemautil.FQL_DATA_SQL_FILE, schemautil.GRAPH_DATA_SQL_FILE):
-    with open(file) as f:
-      conn.executescript(f.read())
-
+  with open('mockfacebook.sql') as f:
+    conn.executescript(f.read())
   return conn
+
+
+def maybe_read(dataset_cls):
+  """Tries to read and return a dataset. If it fails, prints an error.
+  """
+  try:
+    return dataset_cls.read()
+  except IOError, e:
+    print >> sys.stderr, 'Warning: skipping example data tests due to:\n%s' % e
+    return None
 
 
 class HandlerTest(unittest.TestCase):
   """Base test class for webapp2 request handlers.
   """
 
+  ME = '1'
   conn = None
 
   def setUp(self, *handler_classes):
@@ -49,11 +53,10 @@ class HandlerTest(unittest.TestCase):
     handler_classes: RequestHandlers to initialize
     """
     super(HandlerTest, self).setUp()
-    if HandlerTest.conn is None:
-      HandlerTest.conn = make_test_db(':memory:')
 
+    HandlerTest.conn = make_test_db(':memory:')
     for cls in handler_classes:
-      cls.init(self.conn, ME)
+      cls.init(self.conn, self.ME)
 
     self.app = server.application()
 
@@ -83,7 +86,7 @@ class HandlerTest(unittest.TestCase):
         for e, r in zip(expected, results):
           self.assert_dict_equals(e, r)
     except:
-      print >> sys.stderr, '\nquery: %s' % path
+      print >> sys.stderr, '\nquery: %s %s' % (path, args)
       print >> sys.stderr, 'expected: %r' % expected
       print >> sys.stderr, 'received: %r' % response
       raise

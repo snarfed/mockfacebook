@@ -14,13 +14,9 @@ import traceback
 import unittest
 import urllib
 
-import sys
+import fql
 import schemautil
 import testutil
-
-from fql import Fql, FqlHandler, InvalidFunctionError, MissingParamError, \
-  NotIndexableError, ParamMismatchError, SqliteError, UnexpectedError, \
-  UnexpectedEndError, WildcardError
 
 SCHEMA = schemautil.FqlSchema.read()
 
@@ -30,7 +26,7 @@ class FqlTest(unittest.TestCase):
   """
 
   def fql(self, query):
-    return Fql(SCHEMA, query, testutil.ME)
+    return fql.Fql(SCHEMA, query, testutil.ME)
 
   def test_table(self):
     self.assertEquals(None, self.fql('SELECT *').table)
@@ -55,7 +51,9 @@ class FqlHandlerTest(testutil.HandlerTest):
   """
 
   def setUp(self):
-    super(FqlHandlerTest, self).setUp(FqlHandler)
+    super(FqlHandlerTest, self).setUp(fql.FqlHandler)
+    self.conn.executescript(SCHEMA.to_sql())
+    self.conn.commit()
 
   def expect_fql(self, fql, expected, format='json'):
     """Runs an FQL query and checks the response.
@@ -86,8 +84,14 @@ class FqlHandlerTest(testutil.HandlerTest):
         ]}
     self.expect_fql(query, expected)
 
-  def test_every_table(self):
-    dataset = schemautil.FqlDataset.read()
+  def test_example_data(self):
+    dataset = testutil.maybe_read(schemautil.FqlDataset)
+    if not dataset:
+      return
+
+    self.conn.executescript(dataset.to_sql())
+    self.conn.commit()
+    fql.FqlHandler.me = dataset.data['user'].data[0]['uid']
     passed = True
 
     for table, data in dataset.data.items():
@@ -112,7 +116,7 @@ class FqlHandlerTest(testutil.HandlerTest):
       self.expect_fql(query, [{'username': 'snarfed.org'}])
 
     # try a different value for me()
-    FqlHandler.init(self.conn, testutil.ME + 1)
+    fql.FqlHandler.init(self.conn, testutil.ME + 1)
     for query in queries:
       self.expect_fql(query, [])
 
@@ -132,9 +136,9 @@ class FqlHandlerTest(testutil.HandlerTest):
                     [{'length(username)': 11}])
 
     self.expect_error('SELECT strlen() FROM profile WHERE id = me()',
-                      ParamMismatchError('strlen', 1, 0))
+                      fql.ParamMismatchError('strlen', 1, 0))
     self.expect_error('SELECT strlen("asdf", "qwert") FROM profile WHERE id = me()',
-                      ParamMismatchError('strlen', 1, 2))
+                      fql.ParamMismatchError('strlen', 1, 2))
 
   def test_substr_function(self):
     self.expect_fql('SELECT substr("asdf", 1, 2) FROM profile WHERE id = me()',
@@ -143,7 +147,7 @@ class FqlHandlerTest(testutil.HandlerTest):
                     [{'substr("asdf", 2, 6)': 'sdf'}])
 
     self.expect_error('SELECT substr("asdf", 0) FROM profile WHERE id = me()',
-                      ParamMismatchError('substr', 3, 2))
+                      fql.ParamMismatchError('substr', 3, 2))
 
   def test_strpos_function(self):
     self.expect_fql('SELECT strpos("asdf", "sd") FROM profile WHERE id = me()',
@@ -152,7 +156,7 @@ class FqlHandlerTest(testutil.HandlerTest):
                     [{'-1': -1}])
 
     self.expect_error('SELECT strpos("asdf") FROM profile WHERE id = me()',
-                      ParamMismatchError('strpos', 2, 1))
+                      fql.ParamMismatchError('strpos', 2, 1))
 
   def test_composite_fql_types(self):
     # array
@@ -173,7 +177,7 @@ class FqlHandlerTest(testutil.HandlerTest):
 
   def test_non_indexable_column_error(self):
     self.expect_error('SELECT id FROM profile WHERE pic = "http://url.to/image"',
-                      NotIndexableError())
+                      fql.NotIndexableError())
 
     # check that non-indexable columns inside strings are ignored
     self.expect_fql('SELECT id FROM profile WHERE username = "pic pic_big type"', [])
@@ -231,31 +235,31 @@ class FqlHandlerTest(testutil.HandlerTest):
 
   def test_no_select_error(self):
     self.expect_error('INSERT id FROM profile WHERE id = me()',
-                      UnexpectedError('INSERT'))
+                      fql.UnexpectedError('INSERT'))
 
   def test_no_table_error(self):
-    self.expect_error('SELECT id', UnexpectedEndError())
+    self.expect_error('SELECT id', fql.UnexpectedEndError())
 
   def test_no_where_error(self):
-    self.expect_error('SELECT id FROM profile', UnexpectedEndError())
+    self.expect_error('SELECT id FROM profile', fql.UnexpectedEndError())
 
   def test_where_and_no_table_error(self):
-    self.expect_error('SELECT name WHERE id = me()', UnexpectedError('WHERE'))
+    self.expect_error('SELECT name WHERE id = me()', fql.UnexpectedError('WHERE'))
 
   def test_invalid_function_error(self):
     self.expect_error('SELECT name FROM profile WHERE foo()',
-                      InvalidFunctionError('foo'))
+                      fql.InvalidFunctionError('foo'))
 
   def test_wildcard_error(self):
     self.expect_error('SELECT * FROM profile WHERE id = me()',
-                      WildcardError())
+                      fql.WildcardError())
 
   def test_sqlite_error(self):
     self.expect_error('SELECT bad syntax FROM profile WHERE id = me()',
-                      SqliteError('no such column: bad'))
+                      fql.SqliteError('no such column: bad'))
 
   def test_no_query_error(self):
-    self.expect_error('', MissingParamError('query'))
+    self.expect_error('', fql.MissingParamError('query'))
 
 
 if __name__ == '__main__':

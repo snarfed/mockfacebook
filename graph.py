@@ -37,6 +37,7 @@ __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']
 import logging
 import json
 import sqlite3
+import traceback
 
 import webapp2
 
@@ -48,7 +49,7 @@ import schemautil
 REDIRECT_CONNECTION = 'picture'
 
 
-class Error(Exception):
+class GraphError(Exception):
   """Base error class.
 
   Attributes:
@@ -61,7 +62,7 @@ class Error(Exception):
   def __init__(self, *args):
     self.message = self.message % args
 
-class JsonError(Error):
+class JsonError(GraphError):
   """JSON-formatted error class.
 
   Attributes:
@@ -72,12 +73,12 @@ class JsonError(Error):
   def __init__(self, *args):
     self.message = json.dumps({'error': {'message': self.message, 'type': self.type}})
 
-class ObjectNotFoundError(Error):
+class ObjectNotFoundError(GraphError):
   """Used for /<id> requests."""
   status = 200
   message = 'false'
 
-class ObjectsNotFoundError(Error):
+class ObjectsNotFoundError(GraphError):
   """Used for /?ids=... requests."""
   status = 200
   message = '[\n\n]'
@@ -166,25 +167,22 @@ class BaseHandler(webapp2.RequestHandler):
     """
     self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
 
-    namedict = self.prepare_ids(id)
-    resp = self._get(namedict, **kwargs)
-    if namedict.single:
-      if not resp:
-        resp = []
-      else:
-        assert len(resp) == 1
-        resp = resp.values()[0]
-    resp = json.dumps(resp)
+    try:
+      namedict = self.prepare_ids(id)
+      resp = self._get(namedict, **kwargs)
+      if namedict.single:
+        if not resp:
+          resp = []
+        else:
+          assert len(resp) == 1
+          resp = resp.values()[0]
+      self.response.out.write(json.dumps(resp))
 
-    self.response.out.write(resp)
-
-  def handle_exception(self, exception, debug):
-    """Handle Error exceptions."""
-    if isinstance(exception, Error):
-      self.response.write(exception.message)
-      self.response.set_status(exception.status)
-    else:
-      raise exception
+    except GraphError, e:
+      # i don't use webapp2's handle_exception() because there's no way to get
+      # the original exception's traceback.
+      self.response.write(e.message)
+      self.response.set_status(e.status)
 
   def prepare_ids(self, path_id):
     """Returns the id(s) for this request.
@@ -212,6 +210,11 @@ class BaseHandler(webapp2.RequestHandler):
     if not all(name and name != '0' for name in names):
       raise EmptyIdentifierError()
 
+    me = 'me' in names
+    if me:
+      names.remove('me')
+      names.add(self.me)
+
     qmarks = self.qmarks(names)
     cursor = self.conn.execute(
       'SELECT id, alias FROM graph_objects WHERE id IN (%s) OR alias IN (%s)' %
@@ -222,7 +225,7 @@ class BaseHandler(webapp2.RequestHandler):
     namedict.single = bool(path_id)
     for id, alias in cursor.fetchall():
       assert id in names or alias in names
-      namedict[id] = alias if alias in names else id
+      namedict[id] = 'me' if me else alias if alias in names else id
 
     not_found = names - set(namedict.values() + namedict.keys())
     if not_found:
