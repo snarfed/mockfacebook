@@ -6,10 +6,6 @@ Note that this code uses the term 'name' to mean something that's either an id
 or an alias.
 
 TODO:
-- connections as first path element, e.g. /tagged?ids=...
-- /fql?q=... for FQL:  https://developers.facebook.com/blog/post/579/
-- handle requests without a leading /, e.g. '?ids=...'
-
 - ?metadata=true introspection
 - non-obvious id aliases, e.g. comment ids can have the user id as a prefix, or not:
   https://graph.facebook.com/212038_227980440569633_3361295
@@ -143,7 +139,7 @@ class GraphHandler(webapp2.RequestHandler):
     all_connections: set of all string connection names
   """
 
-  ROUTES = [webapp2.Route('/<id:[^/]*><connection:(/[^/]*)?>', 'graph.GraphHandler')]
+  ROUTES = [webapp2.Route('<id:(/[^/]*)?><connection:(/[^/]*)?>', 'graph.GraphHandler')]
 
   @classmethod
   def init(cls, conn, me):
@@ -161,9 +157,13 @@ class GraphHandler(webapp2.RequestHandler):
     """
     self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
 
+    # strip leading slashes
     if connection:
-      connection = connection[1:]  # strip the leading slash
-    elif id in self.all_connections:
+      connection = connection[1:]
+    if id:
+      id = id[1:]
+
+    if id in self.all_connections and not connection:
       connection = id
       id = None
 

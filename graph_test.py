@@ -104,6 +104,9 @@ class ObjectTest(TestBase):
     self.expect('/?ids=bob,1',
                 {'1': self.alice, 'bob': self.bob})
 
+  def test_ids_query_param_no_trailing_slash(self):
+    self.expect('?ids=alice', {'alice': self.alice})
+
   def test_ids_always_prefers_alias(self):
     self.expect('/?ids=alice,1', {'alice': self.alice})
     self.expect('/?ids=1,alice', {'alice': self.alice})
