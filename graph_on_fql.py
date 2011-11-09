@@ -1,8 +1,11 @@
 """Graph API request handler that uses the FQL data in SQLite.
 
-Based on http://developers.facebook.com/docs/reference/api/ .
+This is currently on hold. It requires a schema mapping between FQL and the
+Graph API, which is labor intensive. This is a good start, but there's a fair
+amount of work left to do.
 
 TODO:
+- finish schema mapping (all the TODOs inside OBJECT_QUERIES)
 - errors
 - field selection with ?fields=...
 - multiple object selection with ?ids=...

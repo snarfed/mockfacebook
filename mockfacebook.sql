@@ -22,5 +22,6 @@ CREATE TABLE IF NOT EXISTS graph_objects (
 CREATE TABLE IF NOT EXISTS graph_connections (
   id TEXT NOT NULL,
   connection TEXT NOT NULL,
-  data TEXT NOT NULL  -- JSON dict
+  data TEXT NOT NULL,  -- JSON dict
+  UNIQUE(id, connection, data)
 );

@@ -1,6 +1,6 @@
 # Do not edit! Generated automatically by mockfacebook.
 # http://code.google.com/p/mockfacebook/
-# 2011-11-07 13:54:37.125627
+# 2011-11-08 16:25:41.357079
 
 {'tables': {'album': (Column(name='aid', fb_type='string', sqlite_type='TEXT', indexable=True),
                       Column(name='object_id', fb_type='int', sqlite_type='INTEGER', indexable=True),
@@ -179,7 +179,7 @@
                           Column(name='comments_fbid', fb_type='int', sqlite_type='INTEGER', indexable=False),
                           Column(name='commentsbox_count', fb_type='int', sqlite_type='INTEGER', indexable=False)),
             'mailbox_folder': (Column(name='folder_id', fb_type='string', sqlite_type='TEXT', indexable=True),
-                               Column(name='viewer_id', fb_type='int', sqlite_type='TEXT', indexable=True),
+                               Column(name='viewer_id', fb_type='string', sqlite_type='TEXT', indexable=True),
                                Column(name='name', fb_type='string', sqlite_type='TEXT', indexable=False),
                                Column(name='unread_count', fb_type='int', sqlite_type='INTEGER', indexable=False),
                                Column(name='total_count', fb_type='int', sqlite_type='INTEGER', indexable=False)),
@@ -409,7 +409,7 @@
                        Column(name='filter_key', fb_type='string', sqlite_type='TEXT', indexable=True),
                        Column(name='attribution', fb_type='string', sqlite_type='TEXT', indexable=False),
                        Column(name='actor_id', fb_type='int', sqlite_type='INTEGER', indexable=False),
-                       Column(name='target_id', fb_type='string', sqlite_type='TEXT', indexable=False),
+                       Column(name='target_id', fb_type='int', sqlite_type='INTEGER', indexable=False),
                        Column(name='message', fb_type='string', sqlite_type='TEXT', indexable=False),
                        Column(name='app_data', fb_type='array', sqlite_type='', indexable=False),
                        Column(name='action_links', fb_type='array', sqlite_type='', indexable=False),

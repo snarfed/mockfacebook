@@ -128,36 +128,36 @@ COLUMN_TYPES = {
 # http://bugs.developers.facebook.net/show_bug.cgi?id=20470
 OVERRIDE_COLUMN_TYPES = collections.defaultdict(dict, {
     # FQL tables
-    'album': {'cover_object_id': 'string', },
-    'application': {'app_id': 'string', 'developers': 'object', },
-    'comment': {'id': 'string', 'object_id': 'int', },
-    'domain_admin': {'domain_id': 'string', 'owner_id': 'string', },
-    'event': {'venue': 'object', },
-    'friend': {'uid1': 'string', 'uid2': 'string', },
-    'friendlist': {'owner': 'integer', },
-    'friendlist_member': {'uid': 'integer', },
-    'group': {'version': 'int', },
-    'group_member': {'positions': 'object', },
-    'link': {'link_id': 'int', },
-    'like': {'object_id': 'int', },
-    'mailbox_folder': {'viewer_id': 'string', },
+    'album': {'cover_object_id': 'string'},
+    'application': {'app_id': 'string', 'developers': 'object'},
+    'comment': {'id': 'string', 'object_id': 'int'},
+    'domain_admin': {'domain_id': 'string', 'owner_id': 'string'},
+    'event': {'venue': 'object'},
+    'friend': {'uid1': 'string', 'uid2': 'string'},
+    'friendlist': {'owner': 'integer'},
+    'friendlist_member': {'uid': 'integer'},
+    'group': {'version': 'int'},
+    'group_member': {'positions': 'object'},
+    'link': {'link_id': 'int'},
+    'like': {'object_id': 'int'},
+    'mailbox_folder': {'viewer_id': 'string'},
     'page': {'hours': 'object', 'is_community_page': 'boolean',
-             'location': 'object', 'parking': 'object', },
-    'page_fan': {'uid': 'int', 'page_id': 'int', },
-    'place': {'page_id': 'int', },
+             'location': 'object', 'parking': 'object'},
+    'page_fan': {'uid': 'int', 'page_id': 'int'},
+    'place': {'page_id': 'int'},
     'photo': {
       'owner': 'string', 'src_big_height': 'int', 'src_big_width': 'int',
       'src_small_height': 'int', 'src_small_width': 'int',
       'src_height': 'int', 'src_width': 'int',
       },
-    'photo_tag': {'subject': 'string', },
-    'privacy': {'id': 'int', 'object_id': 'int', },
-    'profile': {'pic_crop': 'object', },
-    'status': {'status_id': 'int', 'source': 'int', 'time': 'int', },
-    'stream': {'actor_id': 'int', 'target_id': int, },
-    'stream_filter': {'uid': 'int', },
-    'user': {'timezone': 'int', },
-    'video': {'vid': 'int', },
+    'photo_tag': {'subject': 'string'},
+    'privacy': {'id': 'int', 'object_id': 'int'},
+    'profile': {'pic_crop': 'object'},
+    'status': {'status_id': 'int', 'source': 'int', 'time': 'int'},
+    'stream': {'actor_id': 'int', 'target_id': 'int'},
+    'stream_filter': {'uid': 'int'},
+    'user': {'timezone': 'int'},
+    'video': {'vid': 'int'},
     })
 
 # overridden indexable columns. maps table name to dict mapping column name to
@@ -165,11 +165,11 @@ OVERRIDE_COLUMN_TYPES = collections.defaultdict(dict, {
 # the docs:
 # http://bugs.developers.facebook.net/show_bug.cgi?id=20472
 OVERRIDE_COLUMN_INDEXABLE = collections.defaultdict(dict, {
-    'connection': {'target_id': True, },
-    'friend_request': {'uid_from': True, },
-    'friendlist_member': {'uid': True, },
-    'like': {'user_id': True, },
-    'stream_filter': {'filter_key': True, },
+    'connection': {'target_id': True},
+    'friend_request': {'uid_from': True},
+    'friendlist_member': {'uid': True},
+    'like': {'user_id': True},
+    'stream_filter': {'filter_key': True},
     })
 
 # these aren't just flat tables, they're more complicated.

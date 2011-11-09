@@ -26,8 +26,10 @@ PY_HEADER = """\
 """ % datetime.datetime.now()
 SQL_HEADER = PY_HEADER.replace('#', '--')
 
-# TODO: other object types have aliases too?
-# e.g. http://graph.facebook.com/FarmVille
+# TODO: other object types have aliases too, e.g. name for applications?
+# see: http://graph.facebook.com/FarmVille
+# but not all, e.g. http://graph.facebook.com/256884317673197 (bridgy)
+# maybe the "link" field?
 ALIAS_FIELD = 'username'
 
 DEFAULT_DB_FILE = 'mockfacebook.db'
@@ -177,12 +179,14 @@ class Schema(PySqlFiles):
 
     # order tables alphabetically
     for table, cols in sorted(self.tables.items()):
-      cols_str = ',\n'.join('  %s %s' % (c.name, c.sqlite_type) for c in cols)
+      col_defs = ',\n'.join('  %s %s' % (c.name, c.sqlite_type) for c in cols)
+      col_names = ', '.join(c.name for c in cols)
       tables.append("""
 CREATE TABLE IF NOT EXISTS `%s` (
-%s
+%s,
+  UNIQUE (%s)
 );
-""" % (table, cols_str))
+""" % (table, col_defs, col_names))
 
     return ''.join(tables)
 
@@ -332,7 +336,7 @@ class FqlDataset(Dataset):
         # order columns to match schema (which is the order in FQL docs)
         values_str = self.schema.json_to_sqlite(object, table)
         output.append("""\
-INSERT INTO `%s` (
+INSERT OR IGNORE INTO `%s` (
   %s
 ) VALUES (
   %s
@@ -391,5 +395,5 @@ class GraphDataset(Dataset):
 
     Returns: string
     """
-    return """INSERT INTO %s VALUES (\n  %s\n);""" % (
+    return """INSERT OR IGNORE INTO %s VALUES (\n  %s\n);""" % (
       table, values_to_sqlite(values))
