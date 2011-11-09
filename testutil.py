@@ -31,6 +31,10 @@ def maybe_read(dataset_cls):
 
 class HandlerTest(unittest.TestCase):
   """Base test class for webapp2 request handlers.
+
+  Attributes:
+    conn: SQLite db connection
+    app: WSGIApplication
   """
 
   ME = '1'
@@ -42,7 +46,7 @@ class HandlerTest(unittest.TestCase):
     """
     super(HandlerTest, self).setUp()
 
-    self.conn = schemautil.make_test_db(':memory:')
+    self.conn = schemautil.get_db(':memory:')
     for cls in handler_classes:
       cls.init(self.conn, self.ME)
 
@@ -70,6 +74,8 @@ class HandlerTest(unittest.TestCase):
         if not isinstance(expected, list):
           expected = [expected]
           results = [results]
+        expected.sort()
+        results.sort()
         self.assertEquals(len(expected), len(results), `expected, results`)
         for e, r in zip(expected, results):
           self.assert_dict_equals(e, r)
@@ -99,8 +105,12 @@ class HandlerTest(unittest.TestCase):
       # or omit some "empty" values, e.g. 0, null, ''. see the TODO in graph_on_fql.py.
       elif not e and not a:
         continue
-      elif e != a:
-        msgs.append('%s: %r != %r' % (key, e, a))
+      else:
+        if isinstance(e, list) and isinstance(a, list):
+          e.sort()
+          a.sort()
+        if e != a:
+          msgs.append('%s: %r != %r' % (key, e, a))
 
     if msgs:
       self.fail('\n'.join(msgs))

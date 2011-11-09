@@ -82,6 +82,9 @@ class ObjectTest(TestBase):
   def test_me(self):
     self.expect('/me', self.alice)
 
+  def test_no_id(self):
+    self.expect_error('/?foo', graph.BadGetError())
+
   def test_not_found(self):
     self.expect_error('/9', graph.ObjectNotFoundError())
 
@@ -136,6 +139,9 @@ class ConnectionTest(TestBase):
 
   def test_me(self):
     self.expect('/me/albums', self.alice_albums)
+
+  def test_no_id(self):
+    self.expect_error('/albums?foo', graph.NoNodeError())
 
   def test_id_not_found(self):
     self.expect('/9/albums', 'false')

@@ -77,11 +77,13 @@ options = None
 # if there are fewer than this many FQL or Graph API rows, print a warning.
 ROW_COUNT_WARNING_THRESHOLD = 10
 
+
 # order matters here! the first handler with a matching route is used.
 HANDLER_CLASSES = (
   oauth.AuthCodeHandler,
   oauth.AccessTokenHandler,
   fql.FqlHandler,
+  # note that this also includes the front page
   graph.GraphHandler,
   )
 
@@ -118,9 +120,8 @@ def warn_if_no_data(conn):
     count = sum(conn.execute(q).fetchall()[0][0] for q in queries)
     if count <= ROW_COUNT_WARNING_THRESHOLD:
       quantity = 'Only %d' % count if count > 0 else 'No'
-      print """\
-%s %s rows found. Consider inserting more, or running download.py, and then
-restart!""" % (quantity, kind)
+      print '%s %s rows found. Consider inserting more or running download.py.' % (
+        quantity, kind)
 
 
 def main(args, started=None):
@@ -132,9 +133,8 @@ def main(args, started=None):
   print 'Options: %s' % options
 
   conn = schemautil.get_db(options.db_file)
-  fql.FqlHandler.init(conn, options.me)
-  graph.GraphHandler.init(conn, options.me)
-  oauth.BaseHandler.init(conn)
+  for cls in HANDLER_CLASSES:
+    cls.init(conn, options.me)
 
   # must run after FqlHandler.init() since that reads the FQL schema
   warn_if_no_data(conn)

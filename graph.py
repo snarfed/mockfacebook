@@ -30,8 +30,8 @@ TODO:
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']
 
-import logging
 import json
+import os
 import sqlite3
 import traceback
 
@@ -43,6 +43,29 @@ import schemautil
 # 200 with response data.
 # http://developers.facebook.com/docs/reference/api/#pictures
 REDIRECT_CONNECTION = 'picture'
+
+# this is here because GraphHandler handles the "/" front page request when it
+# has query parameters, e.g. /?ids=..., and webapp2 can't route based on query
+# parameters alone.
+FRONT_PAGE = """
+<html>
+<body>
+<h2>Welcome to <a href="http://code.google.com/p/mockfacebook/">mockfacebook</a>!</h2>
+<p>This server is currently serving these endpoints:</p>
+<ul>
+<li><code>/...</code>
+ (<a href="http://developers.facebook.com/docs/reference/api/">Graph API</a>)</li>
+<li><code>/method/fql.query</code> and <code>/fql</code>
+ (<a href="http://developers.facebook.com/docs/reference/fql/">FQL</a>)</li>
+<li><code>/dialog/oauth</code> and <code>/oauth/access_token</code>
+ (<a href="http://developers.facebook.com/docs/authentication/">OAuth</a>)</li>
+</ul>
+<p>See the <a href="file://%s/README">README</a>
+and <a href="http://code.google.com/p/mockfacebook/">online docs</a> for more
+information.</p>
+</body>
+</html>
+""" % os.path.dirname(__file__)
 
 
 class GraphError(Exception):
@@ -67,7 +90,9 @@ class JsonError(GraphError):
   type = 'OAuthException'
     
   def __init__(self, *args):
-    self.message = json.dumps({'error': {'message': self.message, 'type': self.type}})
+    self.message = json.dumps(
+      {'error': {'message': self.message % args, 'type': self.type}},
+      indent=2)
 
 class ObjectNotFoundError(GraphError):
   """Used for /<id> requests."""
@@ -155,6 +180,10 @@ class GraphHandler(webapp2.RequestHandler):
   def get(self, id, connection):
     """Handles GET requests.
     """
+    if (id == '/' or not id) and not connection and not self.request.arguments():
+      self.response.out.write(FRONT_PAGE)
+      return
+
     self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
 
     # strip leading slashes
@@ -181,7 +210,7 @@ class GraphHandler(webapp2.RequestHandler):
         else:
           assert len(resp) == 1
           resp = resp.values()[0]
-      self.response.out.write(json.dumps(resp))
+      json.dump(resp, self.response.out, indent=2)
 
     except GraphError, e:
       # i don't use webapp2's handle_exception() because there's no way to get
@@ -191,6 +220,9 @@ class GraphHandler(webapp2.RequestHandler):
 
 
   def get_objects(self, namedict):
+    if not namedict:
+      raise BadGetError()
+
     ids = namedict.keys()
     cursor = self.conn.execute(
       'SELECT id, data FROM graph_objects WHERE id IN (%s)' % self.qmarks(ids),
@@ -199,7 +231,9 @@ class GraphHandler(webapp2.RequestHandler):
                 for id, data in cursor.fetchall())
 
   def get_connections(self, namedict, connection):
-    if connection not in self.all_connections:
+    if not namedict:
+      raise NoNodeError()
+    elif connection not in self.all_connections:
       raise UnknownPathError(connection)
 
     ids = namedict.keys()
@@ -231,7 +265,7 @@ class GraphHandler(webapp2.RequestHandler):
     Raises: GraphError if the query both path_id and ids are specified or an id is
       empty, 0, or not found
     """
-    names = None
+    names = set()
     if 'ids' in self.request.arguments():
       names = set(self.request.get('ids').split(','))
 

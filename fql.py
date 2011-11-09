@@ -2,6 +2,8 @@
 
 TODO:
 - multi-query: https://developers.facebook.com/docs/reference/fql/
+- use sqlite's create_function() for FQL functions:
+  http://docs.python.org/library/sqlite3.html#sqlite3.Connection.create_function
 """
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']
@@ -281,21 +283,11 @@ class FqlHandler(webapp2.RequestHandler):
       results = self.error(self.request.GET, e.code, e.msg)
 
     if self.request.get('format') == 'json' or graph_endpoint:
-      body = self.render_json(results)
+      json.dump(results, self.response.out, indent=2)
     else:
-      body = self.render_xml(results, table)
+      self.response.out.write(self.render_xml(results, table))
 
     self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
-    self.response.out.write(body)
-
-  def render_json(self, results):
-    """Renders a query result into a JSON string response.
-
-    Args:
-      results: dict mapping strings to strings or lists of (key, value) tuples
-      error: boolean
-    """
-    return json.dumps(results)
 
   def render_xml(self, results, table):
     """Renders a query result into an XML string response.

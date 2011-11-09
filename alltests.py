@@ -19,8 +19,8 @@ def main():
   for filename in glob.glob('*_test.py'):
     name = os.path.splitext(filename)[0]
 
-    # these are wishlisted right now.
-    if name in ('server_test', 'graph_on_fql_test'):
+    # this is wishlisted right now.
+    if name in ('graph_on_fql_test',):
       continue
     elif name in sys.modules:
       # this is important. imp.load_module() twice is effectively a reload,

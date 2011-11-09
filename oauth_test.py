@@ -20,12 +20,6 @@ import oauth
 
 
 class OAuthHandlerTest(testutil.HandlerTest):
-  """Tests the OAuthHandler class.
-
-  Attributes:
-    conn: SQLite db connection
-    app: OAuthHandler
-  """
 
   def setUp(self):
     super(OAuthHandlerTest, self).setUp(oauth.AuthCodeHandler,

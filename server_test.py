@@ -1,12 +1,10 @@
 #!/usr/bin/python
 """Unit tests for server.py.
-
-Requires mox.
 """
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']
 
-import atexit
+import json
 import os
 import re
 import threading
@@ -15,17 +13,15 @@ import urllib
 import urllib2
 import urlparse
 import warnings
-import wsgiref
-
-import mox
 
 import fql_test
 import graph_test
+import schemautil
 import server
 import testutil
 
 
-class ServerTest(mox.MoxTestBase):
+class ServerTest(unittest.TestCase):
   """Integration test. Starts the server and makes HTTP requests to localhost.
 
   Ideally the _test_*() methods would be real, top-level test methods, but
@@ -46,7 +42,7 @@ class ServerTest(mox.MoxTestBase):
     warnings.filterwarnings('ignore', 'tempnam is a potential security risk')
     self.db_filename = os.tempnam('/tmp', 'mockfacebook_test.')
 
-    conn = schemautil.make_test_db(self.db_filename)
+    conn = schemautil.get_db(self.db_filename)
     fql_test.insert_test_data(conn)
     graph_test.insert_test_data(conn)
     conn.close()
@@ -85,7 +81,7 @@ class ServerTest(mox.MoxTestBase):
     url = 'http://localhost:%d%s?%s' % (self.PORT, path, urllib.urlencode(args))
     resp = urllib2.urlopen(url).read()
     if expected:
-      self.assertEquals(expected, resp)
+      self.assertEquals(json.loads(expected), json.loads(resp))
     return resp
 
   def test_all(self):

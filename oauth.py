@@ -190,5 +190,4 @@ class AccessTokenHandler(BaseHandler):
       self.response.out.write(
           urllib.urlencode({'access_token': token, 'expires': EXPIRES}))
     except AssertionError, e:
-      logging.exception('Error: ')
       raise exc.HTTPClientError(unicode(e).encode('utf8'))
