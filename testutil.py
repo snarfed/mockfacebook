@@ -1,6 +1,4 @@
 """Unit test utilities.
-
-TODO: put a utility in server that combines all routes, then use that in all tests
 """
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']
@@ -63,6 +61,7 @@ class HandlerTest(unittest.TestCase):
       expected_status: integer, expected HTTP response status
     """
     response = None
+    results = None
     try:
       response = self.get_response(path, args=args)
       self.assertEquals(expected_status, response.status_int)
@@ -73,6 +72,7 @@ class HandlerTest(unittest.TestCase):
         results = json.loads(response)
         if not isinstance(expected, list):
           expected = [expected]
+        if not isinstance(results, list):
           results = [results]
         expected.sort()
         results.sort()
@@ -82,7 +82,7 @@ class HandlerTest(unittest.TestCase):
     except:
       print >> sys.stderr, '\nquery: %s %s' % (path, args)
       print >> sys.stderr, 'expected: %r' % expected
-      print >> sys.stderr, 'received: %r' % response
+      print >> sys.stderr, 'received: %r' % results if results else response
       raise
 
   def get_response(self, path, args=None):
@@ -90,27 +90,23 @@ class HandlerTest(unittest.TestCase):
       path = '%s?%s' % (path, urllib.urlencode(args))
     return self.app.get_response(path)
 
+  # TODO: for the love of god, refactor, or even better, find a more supported
+  # utility somewhere else.
   def assert_dict_equals(self, expected, actual):
     msgs = []
 
-    for key in set(expected.keys()) | set(actual.keys()):
-      e = expected.get(key, None)
-      a = actual.get(key, None)
-      if isinstance(e, re._pattern_type):
-        if not re.match(e, a):
-          msgs.append("%s: %r doesn't match %s" % (key, e, a))
-      elif isinstance(e, dict) and isinstance(a, dict):
-        self.assert_dict_equals(e, a)
-      # this is only here because we don't exactly match FB in whether we return
-      # or omit some "empty" values, e.g. 0, null, ''. see the TODO in graph_on_fql.py.
-      elif not e and not a:
-        continue
-      else:
-        if isinstance(e, list) and isinstance(a, list):
-          e.sort()
-          a.sort()
-        if e != a:
-          msgs.append('%s: %r != %r' % (key, e, a))
-
-    if msgs:
-      self.fail('\n'.join(msgs))
+    if isinstance(expected, re._pattern_type):
+      if not re.match(expected, actual):
+        self.fail("%r doesn't match %s" % (expected, actual))
+    # this is only here because we don't exactly match FB in whether we return
+    # or omit some "empty" values, e.g. 0, null, ''. see the TODO in graph_on_fql.py.
+    elif not expected and not actual:
+      return True
+    elif isinstance(expected, dict) and isinstance(actual, dict):
+      for key in set(expected.keys()) | set(actual.keys()):
+        self.assert_dict_equals(expected.get(key), actual.get(key))
+    else:
+      if isinstance(expected, list) and isinstance(actual, list):
+        expected.sort()
+        actual.sort()
+      self.assertEquals(expected, actual)

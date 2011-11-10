@@ -56,12 +56,12 @@ class TestBase(testutil.HandlerTest):
     self.assertEquals(302, resp.status_int)
     self.assertEquals(redirect_to, resp.headers['Location'])
 
-  def expect_error(self, path, exception):
+  def expect_error(self, path, exception, args=None):
     """Args:
       path: string
       exception: expected instance of a GraphError subclass
     """
-    self.expect(path, exception.message, expected_status=exception.status)
+    self.expect(path, exception.message, expected_status=exception.status, args=args)
 
 
 class ObjectTest(TestBase):
@@ -119,6 +119,20 @@ class ObjectTest(TestBase):
   def test_ids_always_prefers_alias(self):
     self.expect('/?ids=alice,1', {'alice': self.alice})
     self.expect('/?ids=1,alice', {'alice': self.alice})
+
+  def test_access_token(self):
+    self.conn.execute(
+      'INSERT INTO oauth_access_tokens(code, token) VALUES("asdf", "qwert")')
+    self.conn.commit()
+
+    token = {'access_token': 'qwert'}
+    self.expect('/alice', self.alice, args=token)
+    self.expect('/alice/albums', self.alice_albums, args=token)
+
+  def test_invalid_access_token(self):
+    for path in '/alice', '/alice/albums':
+      self.expect_error(path, graph.ValidationError(),
+                        args={'access_token': 'bad'})
 
 
 class ConnectionTest(TestBase):

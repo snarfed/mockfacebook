@@ -62,33 +62,37 @@ class FqlHandlerTest(testutil.HandlerTest):
     super(FqlHandlerTest, self).setUp(fql.FqlHandler)
     insert_test_data(self.conn)
 
-  def expect_fql(self, fql, expected, format='json'):
+  def expect_fql(self, fql, expected, args=None):
     """Runs an FQL query and checks the response.
 
     Args:
       fql: string
       expected: list or dict that the JSON response should match
-      format: passed as the format URL query parameter
+      args: dict, extra query parameters
     """
-    self.expect('/method/fql.query', expected, {'format': format, 'query': fql})
+    full_args = {'format': 'json', 'query': fql}
+    if args:
+      full_args.update(args)
+    self.expect('/method/fql.query', expected, full_args)
 
-  def expect_error(self, query, error):
+  def expect_error(self, query, error, args=None):
     """Runs a query and checks that it returns the given error code and message.
 
     Args:
       fql: string
       error: expected error
+      args: dict, extra query parameters
     """
+    request_args = {'format': 'json', 'query': query, 'method': 'fql.query'}
+    if args:
+      request_args.update(args)
+
     expected = {
       'error_code': error.code,
       'error_msg': error.msg,
-      'request_args': [
-        # order here matters, since the list is compared by value.
-        {'key': 'query', 'value': query},
-        {'key': 'format', 'value': 'json'},
-        {'key': 'method', 'value': 'fql.query'},
-        ]}
-    self.expect_fql(query, expected)
+      'request_args': [{'key': k, 'value': v} for k, v in request_args.items()],
+      }
+    self.expect_fql(query, expected, args=args)
 
   def test_example_data(self):
     dataset = testutil.maybe_read(schemautil.FqlDataset)
@@ -199,7 +203,7 @@ class FqlHandlerTest(testutil.HandlerTest):
 <id>%s</id>
 </profile>
 </fql_query_response>""" % self.ME,
-      format='xml')
+      args={'format': 'xml'})
 
   def test_format_defaults_to_xml(self):
     for format in ('foo', ''):
@@ -211,7 +215,7 @@ class FqlHandlerTest(testutil.HandlerTest):
 <username>alice</username>
 </profile>
 </fql_query_response>""",
-        format=format)
+        args={'format': format})
 
   def test_xml_format_error(self):
     self.expect_fql(
@@ -235,7 +239,7 @@ class FqlHandlerTest(testutil.HandlerTest):
 </arg>
 </request_args>
 </error_response>""",
-      format='xml')
+      args={'format': 'xml'})
 
   def test_no_select_error(self):
     self.expect_error('INSERT id FROM profile WHERE id = me()',
@@ -264,6 +268,19 @@ class FqlHandlerTest(testutil.HandlerTest):
 
   def test_no_query_error(self):
     self.expect_error('', fql.MissingParamError('query'))
+
+  def test_access_token(self):
+    self.conn.execute(
+      'INSERT INTO oauth_access_tokens(code, token) VALUES("asdf", "qwert")')
+    self.conn.commit()
+    self.expect_fql('SELECT username FROM profile WHERE id = me()',
+                    [{'username': 'alice'}],
+                    args={'access_token': 'qwert'})
+
+  def test_invalid_access_token(self):
+    self.expect_error('SELECT username FROM profile WHERE id = me()',
+                      fql.InvalidAccessTokenError(),
+                      args={'access_token': 'bad'})
 
 
 if __name__ == '__main__':

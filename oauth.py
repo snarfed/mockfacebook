@@ -158,10 +158,11 @@ class AccessTokenHandler(BaseHandler):
 
   ROUTES = [(r'/oauth/access_token/?', 'oauth.AccessTokenHandler')]
 
-  def is_valid_token(self, access_token):
+  @staticmethod
+  def is_valid_token(conn, access_token):
     """Returns True if the given access token is valid, False otherwise."""
-    cursor = self.conn.execute('SELECT token FROM oauth_access_tokens WHERE token = ?',
-                               (access_token,))
+    cursor = conn.execute('SELECT token FROM oauth_access_tokens WHERE token = ?',
+                          (access_token,))
     return cursor.fetchone() is not None
 
   def get(self):

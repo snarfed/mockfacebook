@@ -15,6 +15,7 @@ import traceback
 
 import webapp2
 
+import oauth
 import schemautil
 
 # the one connection that returns an HTTP 302 redirect instead of a normal
@@ -84,6 +85,9 @@ class ObjectsNotFoundError(GraphError):
 
 class AccessTokenError(JsonError):
   message = 'An access token is required to request this resource.'
+
+class ValidationError(JsonError):
+  message = 'Error validating application.'
 
 class AliasNotFoundError(JsonError):
   status = 404
@@ -175,6 +179,10 @@ class GraphHandler(webapp2.RequestHandler):
       id = None
 
     try:
+      token =  self.request.get('access_token')
+      if token and not oauth.AccessTokenHandler.is_valid_token(self.conn, token):
+        raise ValidationError()
+
       namedict = self.prepare_ids(id)
 
       if connection:

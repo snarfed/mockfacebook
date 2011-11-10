@@ -24,6 +24,7 @@ at the `/...` endpoint. It supports:
   * aliases as well as ids
   * read access to all connection types except `insights`, `mutualfriends`, `payments`, `subscriptions`, and `Comment/likes`
   * multiple selection via `?ids=...`
+  * checks access token if provided
   * most error codes and messages
 
 [https://developers.facebook.com/docs/reference/fql/ FQL] is served at the
@@ -32,8 +33,9 @@ at the `/...` endpoint. It supports:
   * read access to all tables except `insights` and `permissions`
   * indexable columns. returns an error if a non-indexable column is used in a `WHERE` clause.
   * all functions: `me(), now(), strlen(), substr(), strpos()`
-  * most error codes and messages
+  * checks access token if provided
   * JSON and XML output formats
+  * most error codes and messages
 
 [http://developers.facebook.com/docs/authentication/ OAuth authentication] is
 served at the `/dialog/oauth` and `/oauth/access_token` endpoints. It supports:

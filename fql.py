@@ -16,6 +16,7 @@ from sqlparse import sql
 from sqlparse import tokens
 import webapp2
 
+import oauth
 import schemautil
 
 
@@ -63,6 +64,10 @@ class SqliteError(FqlError):
 class MissingParamError(FqlError):
   code = -1
   msg = 'The parameter %s is required'
+
+class InvalidAccessTokenError(FqlError):
+  code = 190
+  msg = 'Invalid access token signature.'
 
 
 class Fql(object):
@@ -260,6 +265,11 @@ class FqlHandler(webapp2.RequestHandler):
       query = self.request.get(query_arg)
       if not query:
         raise MissingParamError(query_arg)
+
+      token =  self.request.get('access_token')
+      if token and not oauth.AccessTokenHandler.is_valid_token(self.conn, token):
+        raise InvalidAccessTokenError()
+
       logging.debug('Received FQL query: %s' % query)
 
       fql = Fql(self.schema, query, self.me)
