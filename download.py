@@ -12,8 +12,7 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me
 
 You'll need to grant it pretty much all available permissions.
 
-# TODO: update
-Here's the process:
+Here's what happens:
 1. Fetch the Facebook FQL docs.
 2. Scrape the HTML and generate a CREATE TABLE statement for each FQL table.
 3. Write those statements, plus a couple more mockfacebook-specific tables, to
@@ -39,14 +38,6 @@ foreach dir (api fql)
     s/<script .+\/script>//g; \
     s/<a href="http:\/\/developers.facebook.com\/docs\/reference([^"]+)"/<a href="file:\/\/\/home\/$USER\/docs\/facebook\1index.html"/g'
 end
-
-
-TODO:
-- parallelize batch requests
-- diff and notify of new columns, tables, changes etc. store old schema or
-  deltas until explicitly dismissed so you can run it multiple times and still
-  know what to go update later.
-- look at BeautifulSoup or something similar for scraping
 """
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']

@@ -4,28 +4,6 @@ Based on http://developers.facebook.com/docs/reference/api/ .
 
 Note that this code uses the term 'name' to mean something that's either an id
 or an alias.
-
-TODO:
-- ?metadata=true introspection
-- non-obvious id aliases, e.g. comment ids can have the user id as a prefix, or not:
-  https://graph.facebook.com/212038_227980440569633_3361295
-  https://graph.facebook.com/227980440569633_3361295
-- batch requests: http://developers.facebook.com/docs/reference/api/batch/
-- bug: /picture?ids=... returns picture for arbitrary id, should be *first* id
-- ?date_format=...
-- figure out when FB returns "Unsupported get request" vs "access token
-  required" vs plain false.
-- paging: ?limit=x, ?offset=y
-- write support. publishing via POST, deleting via DELETE
-  https://developers.facebook.com/docs/reference/api/#publishing
-- field selection: https://developers.facebook.com/docs/reference/api/#reading
-- return connections in order
-- individual permissions
-- messages: https://developers.facebook.com/docs/reference/api/message/
-- reviews: https://developers.facebook.com/docs/reference/api/Review/
-- real time updates: http://developers.facebook.com/docs/reference/api/realtime/
-- insights: http://developers.facebook.com/docs/reference/api/insights/
-- search: https://developers.facebook.com/docs/reference/api/#searching
 """
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']
@@ -52,14 +30,14 @@ FRONT_PAGE = """
 <body>
 <h2>Welcome to <a href="http://code.google.com/p/mockfacebook/">mockfacebook</a>!</h2>
 <p>This server is currently serving these endpoints:</p>
-<ul>
-<li><code>/...</code>
- (<a href="http://developers.facebook.com/docs/reference/api/">Graph API</a>)</li>
-<li><code>/method/fql.query</code> and <code>/fql</code>
- (<a href="http://developers.facebook.com/docs/reference/fql/">FQL</a>)</li>
-<li><code>/dialog/oauth</code> and <code>/oauth/access_token</code>
- (<a href="http://developers.facebook.com/docs/authentication/">OAuth</a>)</li>
-</ul>
+<table style="border-spacing: .5em">
+<tr><td><a href="http://developers.facebook.com/docs/reference/api/">Graph API</a></td>
+ <td><code>/...[/...]</code></td></tr>
+<tr><td><a href="http://developers.facebook.com/docs/reference/fql/">FQL</a></td>
+ <td><code>/method/fql.query</code> and <code>/fql</code></td></tr>
+<tr><td><a href="http://developers.facebook.com/docs/authentication/">OAuth</a></td>
+ <td><code>/dialog/oauth</code> and <code>/oauth/access_token</code></td></tr>
+</table>
 <p>See the <a href="file://%s/README">README</a>
 and <a href="http://code.google.com/p/mockfacebook/">online docs</a> for more
 information.</p>

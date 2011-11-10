@@ -5,51 +5,6 @@ http://code.google.com/p/mockfacebook/
 
 Top-level HTTP server:
   server.py [--port PORT] [--me USER_ID] [--file SQLITE_DB_FILE]
-
-Supported FQL features:
-- almost all tables
-- all functions: me(), now(), strlen(), substr(), strpos()
-- indexable columns. returns an error if a non-indexable column is used in a
-  WHERE clause.
-- basic error codes and messages
-- JSON and XML output formats
-
-Supported Graph API features:
-- almost all object and connection types
-- basic object lookup
-- aliases (e.g. /[username] for users)
-- basic error messages and types
-- multiple selection via ?ids=...
-
-OAuth authentication is also supported, including auth codes, access tokens,
-server and client side flows, and app login. Individual permission checking
-is not supported yet.
-
-Notes: 
-- all datetime/unix timestamp values should be inserted into the database as UTC
-
-Relevant links to mention in release announcement:
-http://code.google.com/p/thefakebook/
-http://www.testfacebook.com/
-http://www.friendrunner.com/
-https://github.com/arsduo/koala
-http://groups.google.com/group/thinkupapp/browse_thread/thread/825ed3989d5eb164/686fd57e937ae109
-http://developers.facebook.com/blog/post/429/
-
-
-TODO before release:
-- test server
-- readme, including get sqlparse package or dl/symlink, http://code.google.com/p/python-sqlparse/
-
-- parallelize fql schema scrape http requests
-- require locale and either native_hash or pre_hash_string for translation table:
-  file:///home/ryanb/docs/facebook_fql/translation/index.html
-- query restrictions on unified_message and unified_thread
-- insights
-- the permissions table
-- validate subselects
-- more errors
-- permissions
 """
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']

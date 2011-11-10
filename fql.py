@@ -1,9 +1,6 @@
 """FQL request handler and support classes.
 
-TODO:
-- multi-query: https://developers.facebook.com/docs/reference/fql/
-- use sqlite's create_function() for FQL functions:
-  http://docs.python.org/library/sqlite3.html#sqlite3.Connection.create_function
+Based on https://developers.facebook.com/docs/reference/fql/ .
 """
 
 __author__ = ['Ryan Barrett <mockfacebook@ryanb.org>']
