@@ -1,8 +1,6 @@
 (This text appears on the project page, http://code.google.com/p/mockfacebook/ .
 It's formatted with Google Code's wiki markup.)
 
-== About ==
-
 mockfacebook is a standalone HTTP server that implements Facebook's FQL and
 Graph API. It's useful for unit and integration testing and limited manual
 testing.
@@ -14,9 +12,9 @@ add your own data manually or programmatically.
 mockfacebook is backed by SQLite. It's single threaded, so it's not suitable for
 load testing, high throughput, or performance.
 
+<wiki:toc />
 
 == Features ==
-
 
 The [http://developers.facebook.com/docs/reference/api/ Graph API] is served
 at the `/...` endpoint. It supports:
@@ -37,6 +35,10 @@ at the `/...` endpoint. It supports:
   * JSON and XML output formats
   * most error codes and messages
 
+Right now, the FQL and Graph API use _separate_ data. There's progress toward
+unifying them, but it's incomplete and would be labor intensive to maintain.
+Still, feel free to [#Contributing pitch in]!
+
 [http://developers.facebook.com/docs/authentication/ OAuth authentication] is
 served at the `/dialog/oauth` and `/oauth/access_token` endpoints. It supports:
   * auth codes
@@ -45,10 +47,16 @@ served at the `/dialog/oauth` and `/oauth/access_token` endpoints. It supports:
   * app login
 
 See the [http://code.google.com/p/mockfacebook/issues/list issue tracker] for a
-list of other features that may eventually be supported.
+list of other features that may eventually be supported. (TODO)
 
 
-== Installing ==
+== Download and setup ==
+
+No packages or tarballs, just git clone from head!
+
+{{{
+git clone http://code.google.com/p/mockfacebook/
+}}}
 
 mockfacebook depends on [http://webapp-improved.appspot.com/ webapp2], which
 comes bundled as a git submodule, and
@@ -97,6 +105,40 @@ file.)
 
 Once you have some data, just run `server.py`, point your Facebook app at
 `http://localhost:8000/`, and start testing!
+
+
+== Contributing ==
+
+Interested in adding features or fixing bugs? Check out the
+[http://code.google.com/p/mockfacebook/issues/list issue tracker] for some ideas
+(coming soon). If you email me, please use `mockfacebook at ryanb dot org`,
+_not_ `heaven at gmail dot com`.
+
+The code base has two top-level applications. `download.py` downloads FQL and
+Graph API schemas and data from Facebook. It uses `schemautil.py`, which defines
+`*Schema` and `*Dataset` DAO classes. The `*Dataset` classes are only used in
+the unit tests; the server itself queries the SQLite database directly. Schemas
+and data are written to `*_{data,schema}.{py,sql}` and the SQLite db file,
+`mockfacebook.db` by default.
+
+`server.py` serves the data stored in the SQLite db. `graph.py`, `fql.py`, and
+`oauth.py` are the individual HTTP request handlers served by `server.py`.
+`oauth.py` provides access token checking for the other two, but otherwise
+they're independent.
+
+`download.py` and `server.py` both create the SQLite db, if necessary, and
+populate it with the OAuth and Graph API tables in `mockfacebook.sql` and the
+FQL tables in `fql_schema.sql`.
+
+The server and handlers have unit tests in `*_test.py`. You can run them
+individually or with `alltests.py`. Please make sure all tests pass before
+sending patches!
+
+`graph_on_fql.py` is an incomplete, experimental schema mapping from FQL to
+Graph API. It serves a Graph API endpoint using the data in the FQL tables.
+Much of the heavy lifting has already been done, but a fair amount of detail
+work remains, and it would be labor intensive to maintain, so it's not currently
+connected. Feel free to check it out though!
 
 
 <g:plusone size="medium" annotation="none"></g:plusone>

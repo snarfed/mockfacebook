@@ -168,6 +168,8 @@ class Fql(object):
   def process_functions(self, group=None):
     """Recursively parse and process FQL functions in the given group token.
 
+    TODO: switch to sqlite3.Connection.create_function().
+
     Currently handles: me(), now()
     """
     if group is None:

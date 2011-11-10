@@ -17,7 +17,7 @@ TODO:
 - handle special cases for which values are omitted when, e.g. null, 0, ''. 0
   is omitted for some things, like page.likes, but not others, like
   group.version. same with '', e.g. group.venue.street. may need another
-  override dict in make_schema. :/
+  override dict in download.py. :/
 - time zones in timestamps. (it 's currently hard coded to PST.)
 - id aliases, e.g. comment ids can have the user id as a prefix, or not:
   https://graph.facebook.com/212038_227980440569633_3361295
@@ -320,7 +320,7 @@ SELECT
  username,
  third_party_id, -- TODO ok as is
    -- should just append ?fields=third_party_id to the User ID in the
-   -- make_schema publishable graph api ID URLs, but then it doesn't return the
+   -- download.py publishable graph api ID URLs, but then it doesn't return the
    -- rest of the fields. :/
  CAST(timezone AS INTEGER) AS timezone,
  strftime("%Y-%m-%dT%H:%M:%S+0000", profile_update_time, "unixepoch") AS updated_time,

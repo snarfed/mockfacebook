@@ -1,5 +1,5 @@
 -- mockfacebook tables for storing OAuth and Graph API data. (The FQL tables are
--- automatically generated into fql_schema.sql by make_schema.py.)
+-- automatically generated into fql_schema.sql by download.py.)
 
 CREATE TABLE IF NOT EXISTS oauth_codes (
   code TEXT NOT NULL PRIMARY KEY,
