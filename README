@@ -25,7 +25,7 @@ at the `/...` endpoint. It supports:
   * checks access token if provided
   * most error codes and messages
 
-[https://developers.facebook.com/docs/reference/fql/ FQL] is served at the
+[http://developers.facebook.com/docs/reference/fql/ FQL] is served at the
 `/method/fql.query` and `/fql` endpoints. It supports:
   * full FQL syntax, including subselects
   * read access to all tables except `insights` and `permissions`
@@ -47,7 +47,7 @@ served at the `/dialog/oauth` and `/oauth/access_token` endpoints. It supports:
   * app login
 
 See the [http://code.google.com/p/mockfacebook/issues/list issue tracker] for a
-list of other features that may eventually be supported. (TODO)
+list of other features that may eventually be supported.
 
 
 == Download and setup ==
@@ -77,7 +77,7 @@ First, you'll need data. The easiest way to get some is the `download.py`
 script, which downloads your own data and some public data.
 
 You'll need an access token, which you can get from the
-[https://developers.facebook.com/tools/explorer Graph API Explorer]. Click on
+[http://developers.facebook.com/tools/explorer Graph API Explorer]. Click on
 the Get Access Token button and select all of the permissions under each tab,
 especially `offline_access` under Extended Permissions.
 
@@ -111,8 +111,8 @@ Once you have some data, just run `server.py`, point your Facebook app at
 
 Interested in adding features or fixing bugs? Check out the
 [http://code.google.com/p/mockfacebook/issues/list issue tracker] for some ideas
-(coming soon). If you email me, please use `mockfacebook at ryanb dot org`,
-_not_ `heaven at gmail dot com`.
+. If you email me, please use `mockfacebook at ryanb dot org`, _not_ `heaven at
+gmail dot com`.
 
 The code base has two top-level applications. `download.py` downloads FQL and
 Graph API schemas and data from Facebook. It uses `schemautil.py`, which defines
