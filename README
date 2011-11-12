@@ -110,9 +110,9 @@ Once you have some data, just run `server.py`, point your Facebook app at
 == Contributing ==
 
 Interested in adding features or fixing bugs? Check out the
-[http://code.google.com/p/mockfacebook/issues/list issue tracker] for some ideas
-. If you email me, please use `mockfacebook at ryanb dot org`, _not_ `heaven at
-gmail dot com`.
+[http://code.google.com/p/mockfacebook/issues/list issue tracker] for some
+ideas. If you email me, please use `mockfacebook at ryanb dot org`, _not_
+`heaven at gmail dot com`.
 
 The code base has two top-level applications. `download.py` downloads FQL and
 Graph API schemas and data from Facebook. It uses `schemautil.py`, which defines
