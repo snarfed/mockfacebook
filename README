@@ -59,7 +59,14 @@ git clone http://code.google.com/p/mockfacebook/
 }}}
 
 mockfacebook depends on [http://webapp-improved.appspot.com/ webapp2], which
-comes bundled as a git submodule, and
+comes bundled as a git submodule:
+
+{{{
+git submodule init
+git submodule update
+}}}
+
+and
 [http://code.google.com/p/python-sqlparse/ sqlparse], which doesn't. Here are
 shell commands to download and install sqlparse:
 
@@ -96,7 +103,7 @@ sqlite3 mockfacebook.db
 ...
 sqlite> INSERT INTO graph_objects(id, alias, data) VALUES(
   '123',
-  'fake_user', 
+  'fake_user',
   '{"id": "123", "username": "fake_user", "first_name": "John", "last_name": "Doe", ...}');
 }}}
 
@@ -142,5 +149,5 @@ connected. Feel free to check it out though!
 
 
 <g:plusone size="medium" annotation="none"></g:plusone>
-<wiki:gadget width="60" height="30" border="0" title="" style="overflow: hidden" url="http://hosting.gmodules.com/ig/gadgets/file/105726654954270975870/tweet_button3.xml" up_Tweet_text="mockfacebook: a standalone implementation of Facebook's FQL and Graph API" up_Tweet_URL="http://code.google.com/p/mockfacebook/" up_Twitter_user="mockfacebook" /> 
+<wiki:gadget width="60" height="30" border="0" title="" style="overflow: hidden" url="http://hosting.gmodules.com/ig/gadgets/file/105726654954270975870/tweet_button3.xml" up_Tweet_text="mockfacebook: a standalone implementation of Facebook's FQL and Graph API" up_Tweet_URL="http://code.google.com/p/mockfacebook/" up_Twitter_user="mockfacebook" />
 <wiki:gadget border="0" w="60" title="" url="http://hosting.gmodules.com/ig/gadgets/file/110509162544058635853/steegle-google-sites-facebook-like-button.xml" up_url="http://code.google.com/p/mockfacebook/" up_layout="button_count" />
