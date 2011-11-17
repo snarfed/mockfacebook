@@ -475,7 +475,9 @@ def get_graph_ids():
     return [f['id'] for f in batch_request(['me/friends'])['me/friends']['data']]
   else:
     urls = ['me/%s?limit=%s' % (conn, options.num_per_type) for conn in GRAPH_DATA_ID_CONNECTIONS]
-    conn_ids = [resp['data'][0]['id'] for resp in batch_request(urls).values() if len(resp['data']) > 0]
+    conn_ids = []
+    for resp in batch_request(urls).values():
+        conn_ids.extend(item['id'] for item in resp['data'])
     return GRAPH_DATA_IDS + conn_ids
 
 
