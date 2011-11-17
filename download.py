@@ -270,7 +270,7 @@ GRAPH_DATA_IDS = [
 
 # Connections used to pull extra Graph API object ids based on the access
 # token's user.
-GRAPH_DATA_ID_CONNECTIONS = ('checkins', 'friendlists')
+GRAPH_DATA_ID_CONNECTIONS = ('checkins', 'friendlists', 'accounts')
 
 # names of connections that need special handling.
 UNSUPPORTED_CONNECTIONS = (
@@ -475,7 +475,7 @@ def get_graph_ids():
     return [f['id'] for f in batch_request(['me/friends'])['me/friends']['data']]
   else:
     urls = ['me/%s?limit=1' % conn for conn in GRAPH_DATA_ID_CONNECTIONS]
-    conn_ids = [resp['data'][0]['id'] for resp in batch_request(urls).values()]
+    conn_ids = [resp['data'][0]['id'] for resp in batch_request(urls).values() if len(resp['data']) > 0]
     return GRAPH_DATA_IDS + conn_ids
 
 
