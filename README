@@ -119,6 +119,9 @@ file.)
 Once you have some data, just run `server.py`, point your Facebook app at
 `http://localhost:8000/`, and start testing!
 
+NOTE: You can supply a --me option (server.py --me=12345) to designate what
+resolves to "/me/".  (More work will be done to expand to support multiple
+page_tokens to correlate this information automatically).
 
 == Contributing ==
 
