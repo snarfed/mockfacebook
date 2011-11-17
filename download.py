@@ -680,6 +680,10 @@ def main():
   global options
   options = parse_args()
 
+  if options.db_file:  # FIXME - should do dupe checking
+      sql = 'INSERT INTO oauth_access_tokens(code, token) VALUES("asdf", "%s");' % options.access_token
+      schemautil.get_db(options.db_file).executescript(sql)
+
   if options.fql_schema:
     fql_schema = schemautil.FqlSchema()
     scrape_schema(fql_schema, options.fql_docs_url, FQL_COLUMN_RE)
@@ -696,6 +700,7 @@ def main():
     schema, dataset = fetch_graph_schema_and_data(ids)
     schema.write()
     dataset.write(db_file=options.db_file)
+
 
 
 if __name__ == '__main__':
