@@ -99,6 +99,7 @@ class ServerTest(unittest.TestCase):
   def _test_graph(self):
     self.expect('/1', {}, '{"foo": "bar", "id": "1"}')
     self.expect('/bob/albums', {}, '{"data": [{"id": "5"}]}')
+    self.expect('/me', {}, '{\n  "foo": "bar", \n  "id": "1"\n}')
 
   def _test_oauth(self):
     args = {'client_id': 'x',

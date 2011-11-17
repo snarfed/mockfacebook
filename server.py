@@ -59,7 +59,7 @@ def parse_args(argv):
                     help='port to serve on (default %default)')
   parser.add_option('-f', '--db_file', default= 'mockfacebook.db',
                     help='SQLite database file (default %default)')
-  parser.add_option('--me', type='int', default=1,
+  parser.add_option('--me', type='str', default=1,
                     help='user id that me() should return (default %default)')
 
   options, args = parser.parse_args(args=argv)
