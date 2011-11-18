@@ -149,7 +149,10 @@ class AuthCodeHandler(BaseHandler):
         redirect_args['state'] = state
       redirect_parts[4] = urllib.urlencode(redirect_args)
 
-    self.redirect(urlparse.urlunparse(redirect_parts))
+    # wsgiref/webob expects a non Unicode redirect_url, otherwise it
+    # breaks with assert type(val) is StringType, "Header values must be strings" error.
+    redirect_url = str(urlparse.urlunparse(redirect_parts))
+    self.redirect(redirect_url)
 
 
 class AccessTokenHandler(BaseHandler):
@@ -178,15 +181,15 @@ class AccessTokenHandler(BaseHandler):
                                                     'code')
       except AssertionError, e:
         assert False, ERROR_JSON % 'Missing %s parameter' % unicode(e)
-  
+
       # app login. background:
       # http://developers.facebook.com/docs/authentication/#applogin
       if grant_type == 'client_credentials':
         redirect_uri = ''
         code = self.create_auth_code(client_id, redirect_uri)
-  
+
       token = self.create_access_token(code, client_id, redirect_uri)
-  
+
       self.response.charset = 'utf-8'
       self.response.out.write(
           urllib.urlencode({'access_token': token, 'expires': EXPIRES}))
