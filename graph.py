@@ -13,6 +13,10 @@ import os
 import sqlite3
 import traceback
 
+import datetime
+import random
+import sys
+
 import webapp2
 
 import oauth
@@ -45,7 +49,6 @@ information.</p>
 </body>
 </html>
 """ % os.path.dirname(__file__)
-
 
 class GraphError(Exception):
   """Base error class.
@@ -110,6 +113,11 @@ class NoNodeError(JsonError):
   message = 'No node specified'
   type = 'Exception'
 
+class InternalError(JsonError):
+  status = 500
+  message = '%s'
+  type = 'InternalError'
+
 
 class NameDict(dict):
   """Maps ids map to the names (eiter id or alias) they were requested by.
@@ -130,6 +138,145 @@ def is_int(str):
     return False
 
 not_int = lambda str: not is_int(str)
+
+class UTCTZ(datetime.tzinfo):
+  def utcoffset(self, dt):
+    return datetime.timedelta(0)
+  def dst(self, dt):
+    return datetime.timedelta(0)
+
+utctz = UTCTZ()
+
+class PostField(object):
+  def __init__(self, name, required=False, is_argument=True, default="", arg_type=str, validator=None):
+    """Represents a post field/argument
+
+    Args:
+      name: name of the argument
+      required: set to True if the argument is required
+      is_argument: if set to true, then field can be specified by the user (i.e. an argument)
+      default: the default value to be used. This can be a string or a callback that returns a string
+      arg_type: the Python type that this argument must be. The type must be JSON serializable
+      validator: the callback to use to validate the argument.
+    """
+    self.name = name
+    self.required = required
+    self.is_argument = is_argument
+    self.default = default
+    self.arg_type = arg_type
+    self.validator = validator
+
+  def get_default(self, *args, **kwargs):
+    if callable(self.default):
+      return self.default(*args, **kwargs)
+    return self.default
+
+  def is_valid(self, arg):
+    if not isinstance(arg, self.arg_type):
+      return False
+    if callable(self.validator):
+      return self.validator(arg)
+    return True
+
+class MultiType(object):
+  def __init__(self, *args):
+    self.connections = args
+
+default_url = "http://invalid/invalid"
+
+def get_generic_id(*args, **kwargs):
+  obj_id = kwargs.get("obj_id", "obj_id")
+  return "%s_%s" % (obj_id, random.randint(0, sys.maxint))
+
+def get_comment_id(*args, **kwargs):
+  return get_generic_id(*args, **kwargs)
+
+def get_note_id(*args, **kwargs):
+  return get_generic_id(*args, **kwargs)
+
+def get_link_id(*args, **kwargs):
+  return get_generic_id(*args, **kwargs)
+
+def get_status_id(*args, **kwargs):
+  return get_generic_id(*args, **kwargs)
+
+def get_post_id(*args, **kwargs):
+  return get_generic_id(*args, **kwargs)
+
+def get_actions(*args, **kwargs):
+  obj_id = kwargs.get("obj_id", "obj_id")
+  obj_type = kwargs.get("type", "obj_type")
+  gen_id = kwargs.get("id", "gen_id").split('_')[-1]
+  return [{"name": "Comment", "link": "https://www.facebook.com/%s/%s/%s" % (obj_id, obj_type, gen_id)},
+          {"name": "Like", "link": "https://www.facebook.com/%s/%s/%s" % (obj_id, obj_type, gen_id)}]
+
+def get_comments(*args, **kwargs):
+  return {"count": 0}
+
+def get_name_from_link(*args, **kwargs):
+  return kwargs.get("link", default_url)
+
+def get_likes(*args, **kwargs):
+  return {"data": []}
+
+def get_from(*args, **kwargs):
+  user_id = kwargs.get("user_id")
+  return {"name": "Test", "category": "Test", "id": user_id}
+
+def get_application(*args, **kwargs):
+  return {"name": "TestApp", "canvas_name": "test", "namespace": "test", "id":"1234567890"}
+
+def get_time(*args, **kwargs):
+  return datetime.datetime.now(utctz).strftime("%Y-%m-%dT%H:%S:%M%z")
+
+# TODO: support posting of events (attending, maybe, declined), albums (photos), and checkins
+# Note: the order of the fields matter because the default values of some fields depend on the value of other fields.
+#       "id" should always be first. and "type" should be before "action".
+# Note: "posts" is not an actual type, and you can't publish to it. "posts" is just another way to get data from "feed"
+CONNECTION_POST_ARGUMENTS = {"feed": MultiType("statuses", "links"),
+                             "comments": [PostField("message", True),
+                                          PostField("type", False, False, default="comment"),
+                                          PostField("id", False, False, default=get_comment_id),
+                                          PostField("from", False, False, arg_type=dict, default=get_from),
+                                          PostField("created_time", False, False, default=get_time),
+                                          PostField("likes", False, False, arg_type=int, default=0),
+                                          # TODO: support user_likes
+                                          ],
+                             "notes": [PostField("subject", True),
+                                       PostField("message", True),
+                                       PostField("id", False, False, default=get_note_id),
+                                       PostField("from", False, False, arg_type=dict, default=get_from),
+                                       PostField("created_time", False, False, default=get_time),
+                                       PostField("updated_time", False, False, default=get_time),
+                                       # TODO: build out more stuff for notes
+                                       ],
+                             "links": [PostField("link", True, default=default_url),
+                                       PostField("message", False),
+                                       PostField("id", False, False, default=get_link_id),
+                                       PostField("from", False, False, arg_type=dict, default=get_from),
+                                       PostField("type", False, False, default="link"),
+                                       PostField("name", False, False, default=get_name_from_link),
+                                       PostField("caption", False, False),
+                                       PostField("comments", False, False, arg_type=list, default=get_comments),
+                                       PostField("description", False, False),
+                                       PostField("icon", False, False, default=default_url),
+                                       PostField("actions", False, False, arg_type=list, default=get_actions),
+                                       PostField("application", False, False, arg_type=dict, default=get_application),
+                                       PostField("picture", False, False, default=default_url),
+                                       PostField("created_time", False, False, default=get_time),
+                                       PostField("updated_time", False, False, default=get_time),
+                                       ],
+                             "statuses": [PostField("message", True, default=None),
+                                          PostField("id", False, False, default=get_status_id),
+                                          PostField("from", False, False, arg_type=dict, default=get_from),
+                                          PostField("created_time", False, False, default=get_time),
+                                          PostField("updated_time", False, False, default=get_time),
+                                          PostField("type", False, False, default="status"),
+                                          PostField("actions", False, False, arg_type=list, default=get_actions),
+                                          PostField("comments", False, False, arg_type=dict, default=get_comments),
+                                          PostField("icon", False, False, default=default_url),
+                                          PostField("application", False, False, arg_type=dict, default=get_application),
+                                          ]}
 
 
 class GraphHandler(webapp2.RequestHandler):
@@ -158,22 +305,10 @@ class GraphHandler(webapp2.RequestHandler):
     cls.me = me
     cls.schema = schemautil.GraphSchema.read()
     cls.all_connections = reduce(set.union, cls.schema.connections.values(), set())
+    cls.posted_graph_objects = {}
+    cls.posted_connections = {}  # maps id -> connection -> list of elements
 
-  def get(self, id, connection):
-    """Handles GET requests.
-    """
-    if (id == '/' or not id) and not connection and not self.request.arguments():
-      self.response.out.write(FRONT_PAGE)
-      return
-
-    self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
-
-    # strip leading slashes
-    if connection:
-      connection = connection[1:]
-    if id:
-      id = id[1:]
-
+  def _get(self, id, connection):
     if id in self.all_connections and not connection:
       connection = id
       id = None
@@ -196,8 +331,29 @@ class GraphHandler(webapp2.RequestHandler):
         else:
           assert len(resp) == 1
           resp = resp.values()[0]
-      json.dump(resp, self.response.out, indent=2)
+      return resp
+    except GraphError as e:
+      raise e
 
+
+  def get(self, id, connection):
+    """Handles GET requests.
+    """
+    if (id == '/' or not id) and not connection and not self.request.arguments():
+      self.response.out.write(FRONT_PAGE)
+      return
+
+    self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+
+    # strip leading slashes
+    if connection:
+      connection = connection[1:]
+    if id:
+      id = id[1:]
+
+    try:
+      resp = self._get(id, connection)
+      json.dump(resp, self.response.out, indent=2)
     except GraphError, e:
       # i don't use webapp2's handle_exception() because there's no way to get
       # the original exception's traceback, which makes testing difficult.
@@ -205,16 +361,91 @@ class GraphHandler(webapp2.RequestHandler):
       self.response.set_status(e.status)
 
 
+  def post(self, id, connection):
+    id = id.strip("/")
+    connection = connection.strip("/")
+
+    # try to get the base object we're posting to
+    try:
+      graph_obj = self._get(id, None)
+    except GraphError as e:
+      self.response.write(e.message)
+      self.response.set_status(e.status)
+      return
+
+    # validate the object type and connection
+    try:
+      obj_type = graph_obj.get("type")
+      if obj_type is None:
+        raise InternalError("object does not have a type")
+
+      valid_connections =  self.schema.connections.get(obj_type)
+      if valid_connections is None:
+        raise InternalError("object type: %s is not supported" % obj_type)
+
+      if connection not in valid_connections:
+        raise InternalError("Connection: %s is not supported" % connection)
+    except GraphError as e:
+      self.response.write(e.message)
+      self.response.set_status(e.status)
+      return
+
+    # TODO: validate that the mock is in sync with Facebook's metadata (except their metadata is really stale right now)
+    #fields = self.schema.tables.get(obj_type)
+    fields = []
+
+    if self.update_graph_object(id, connection, graph_obj):
+      resp = True
+    else:
+      # The connection determines what type of object to create
+      try:
+        graph_obj = self.create_graph_object(fields, self.request.POST, id, connection, graph_obj)
+        obj_id = graph_obj["id"]
+        GraphHandler.posted_graph_objects[obj_id] = graph_obj
+        resp = {"id": obj_id}
+      except GraphError as e:
+        self.response.write(e.message)
+        self.response.set_status(e.status)
+        return
+
+    # check the arguments
+
+    # get the object w/ the given id and check it's type
+    # lookup in the schema, the type and get the list of available options next.
+    # Only some of those options are postable (does fb have a schema for this or do we just hardcode it?)
+    # Then each option has a list of arguments it accepts (some require and some not) (does fb have a scheme for this or hardcode it?)
+    # Note: hardcoding is possible b/c it's all documented (what's available and required) but it'd be better if they had a schema for this.
+
+    self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+    json.dump(resp, self.response.out, indent=2)
+
+  def delete(self, id, connection):
+    if id == "/clear":
+      GraphHandler.posted_graph_objects = {}
+      GraphHandler.posted_connections = {}
+      response_code = "ok"
+    else:
+      response_code = "fail"
+    self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+    resp = {"response": response_code}
+    json.dump(resp, self.response.out, indent=2)
+
   def get_objects(self, namedict):
     if not namedict:
       raise BadGetError()
 
     ids = namedict.keys()
+
+    ret_dict = {}
+    for obj_id in ids:
+      if obj_id in GraphHandler.posted_graph_objects:
+        return {obj_id: GraphHandler.posted_graph_objects[obj_id]}
+
     cursor = self.conn.execute(
       'SELECT id, data FROM graph_objects WHERE id IN (%s)' % self.qmarks(ids),
       ids)
-    return dict((namedict[id], json.loads(data))
-                for id, data in cursor.fetchall())
+    ret_dict = dict((namedict[obj_id], json.loads(data)) for obj_id, data in cursor.fetchall())
+    return ret_dict
 
   def get_connections(self, namedict, connection):
     if not namedict:
@@ -231,8 +462,14 @@ class GraphHandler(webapp2.RequestHandler):
     if connection == REDIRECT_CONNECTION and rows:
       self.redirect(json.loads(rows[0][1]), abort=True)  # this raises
 
-    resp = dict((name, {'data': []}) for name in namedict.values())
+    resp = {}
+    # add posted data first b/c it must be newer
+    for name in namedict.values():
+      posted_data = GraphHandler.posted_connections.get(name, {}).get(connection, [])
+      resp[name] = {"data": posted_data}
+
     for id, data in rows:
+      resp[namedict[id]]['data'].extend(posted_data)
       resp[namedict[id]]['data'].append(json.loads(data))
 
     return resp
@@ -279,6 +516,9 @@ class GraphHandler(webapp2.RequestHandler):
     for id, alias in cursor.fetchall():
       assert id in names or alias in names
       namedict[id] = 'me' if me else alias if alias in names else id
+    for name in names:
+      if name in GraphHandler.posted_graph_objects:
+        namedict[name] = name
 
     not_found = names - set(namedict.values() + namedict.keys())
     if not_found:
@@ -298,3 +538,91 @@ class GraphHandler(webapp2.RequestHandler):
     """Returns a '?, ?, ...' string with a question mark per value.
     """
     return ','.join('?' * len(values))
+
+  def update_graph_object(self, id, connection, graph_object):
+    if connection == "likes":
+      liker = id  # TODO: get the the user performing the like
+      like_data = graph_object.setdefault("likes", {"data": []})["data"]
+      for data in like_data:
+        if data["id"] == liker:
+          return True  # probably should be False, but Facebook returns True
+      like_data.append({"id": liker, "name":"Test", "category": "Test"})
+      GraphHandler.posted_graph_objects[id] = graph_object  # keep a copy the graph object to modify it
+      return True
+    return False
+
+  def create_blob_from_args(self, obj_id, fields, spec, args):
+    """
+    Args:
+      fields: The known fields given by Facebook's metadata
+      spec: The argument specification
+      args: The arguments to use to create the blob
+
+    Returns:
+    Raises: GraphError
+    """
+    # TODO: validate that the mock is in sync with Facebook's metadata (except their metadata is really stale right now)
+    # field_names = set([f.name for f in fields])
+    # spec_names = set([a.name for a in spec])
+    # removed_arguments = spec_names - field_names
+    # if len(removed_arguments) > 0:
+    #   raise InternalError("Update the mock. The following arguments are no longer supported by Facebook: %s" % ",".join(removed_arguments))
+
+    default_args = {"obj_id": obj_id,
+                    "user_id": self.me,   # TODO: get the user_id from the access_token
+                    }
+
+    blob = {}
+    for field in spec:
+      arg_value = args.get(field.name)
+      # Facebook currently doesn't return errors if required arguments are not specified, they just have default values
+      if arg_value is None:
+        arg_value = field.get_default(**default_args)
+      else:
+        if not field.is_valid(arg_value):
+          arg_value = field.get_default(**default_args)
+      if arg_value is not None:
+        blob[field.name] = arg_value
+
+      # populate the default_args
+      default_args[field.name] = arg_value
+
+    return blob
+
+
+  def create_graph_object(self, fields, arguments, id, connection, parent_obj):
+    argument_spec = CONNECTION_POST_ARGUMENTS.get(connection)
+    if argument_spec is None:
+      raise InternalError("Connection: %s is not supported. You can add it yourself. :)")
+
+    if isinstance(argument_spec, MultiType):
+      last_exception = InternalError("Could not parse POST arguments")
+      if "link" in arguments and "links" in argument_spec.connections:
+        blob = self.create_blob_from_args(id, fields, CONNECTION_POST_ARGUMENTS.get(connection), arguments)
+        connections = GraphHandler.posted_connections.setdefault(id, {})
+        connections.setdefault(connection, []).insert(0,blob)
+        if connection == "feed":
+          connections.setdefault("posts", []).insert(0,blob)  # posts mirror feed
+        return blob
+      for c in argument_spec.connections:
+        try:
+          blob = self.create_blob_from_args(id, fields, CONNECTION_POST_ARGUMENTS.get(c), arguments)
+          connections = GraphHandler.posted_connections.setdefault(id, {})
+          connections.setdefault(connection, []).insert(0,blob)
+          if connection == "feed":
+            connections.setdefault("posts", []).insert(0,blob)  # posts mirror feed
+          return blob
+        except GraphError as e:
+          last_exception = e
+      raise last_exception
+    else:
+      blob = self.create_blob_from_args(id, fields, argument_spec, arguments)
+      if parent_obj is not None:
+        connection_obj = parent_obj.get(connection)
+        if connection_obj is not None:
+          # update the parent object if there is a list of this connection stored there
+          connection_obj["count"] += 1
+          data = connection_obj.setdefault("data", [])
+          data.append(blob)
+
+      return blob

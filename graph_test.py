@@ -20,6 +20,7 @@ def insert_test_data(conn):
   conn.executescript("""
 INSERT INTO graph_objects VALUES('1', 'alice', '{"id": "1", "foo": "bar"}');
 INSERT INTO graph_objects VALUES('2', 'bob', '{"id": "2", "inner": {"foo": "baz"}}');
+INSERT INTO graph_objects VALUES('3', null, '{"id": "3", "type": "page", "inner": {"foo": "baz"}}');
 INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "3"}');
 INSERT INTO graph_connections VALUES('1', 'albums', '{"id": "4"}');
 INSERT INTO graph_connections VALUES('2', 'albums', '{"id": "5"}');
