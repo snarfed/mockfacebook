@@ -436,15 +436,17 @@ class GraphHandler(webapp2.RequestHandler):
 
     ids = namedict.keys()
 
-    ret_dict = {}
-    for obj_id in ids:
-      if obj_id in GraphHandler.posted_graph_objects:
-        return {obj_id: GraphHandler.posted_graph_objects[obj_id]}
 
     cursor = self.conn.execute(
       'SELECT id, data FROM graph_objects WHERE id IN (%s)' % self.qmarks(ids),
       ids)
     ret_dict = dict((namedict[obj_id], json.loads(data)) for obj_id, data in cursor.fetchall())
+
+    # Anything in the published graph objects overwrite the normal results
+    for obj_id in ids:
+      if obj_id in GraphHandler.posted_graph_objects:
+        ret_dict[obj_id] = GraphHandler.posted_graph_objects[obj_id]
+
     return ret_dict
 
   def get_connections(self, namedict, connection):
