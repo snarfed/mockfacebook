@@ -600,7 +600,7 @@ class GraphHandler(webapp2.RequestHandler):
     if isinstance(argument_spec, MultiType):
       last_exception = InternalError("Could not parse POST arguments")
       if "link" in arguments and "links" in argument_spec.connections:
-        blob = self.create_blob_from_args(id, fields, CONNECTION_POST_ARGUMENTS.get(connection), arguments)
+        blob = self.create_blob_from_args(id, fields, CONNECTION_POST_ARGUMENTS.get("links"), arguments)
         connections = GraphHandler.posted_connections.setdefault(id, {})
         connections.setdefault(connection, []).insert(0,blob)
         if connection == "feed":
