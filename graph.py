@@ -293,7 +293,7 @@ class GraphHandler(webapp2.RequestHandler):
     all_connections: set of all string connection names
   """
 
-  ROUTES = [webapp2.Route('<id:(/[^/]*)?><connection:(/[^/]*)?>', 'graph.GraphHandler')]
+  ROUTES = [webapp2.Route('<id:(/[^/]*)?><connection:(/[^/]*)?/?>', 'graph.GraphHandler')]
 
   @classmethod
   def init(cls, conn, me):
@@ -345,11 +345,11 @@ class GraphHandler(webapp2.RequestHandler):
 
     self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
 
-    # strip leading slashes
+    # strip slashes
     if connection:
-      connection = connection[1:]
+      connection = connection.strip("/")
     if id:
-      id = id[1:]
+      id = id.strip("/")
 
     try:
       resp = self._get(id, connection)
