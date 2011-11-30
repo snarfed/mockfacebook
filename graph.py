@@ -12,6 +12,7 @@ import json
 import os
 import sqlite3
 import traceback
+import types
 
 import datetime
 import random
@@ -148,7 +149,7 @@ class UTCTZ(datetime.tzinfo):
 utctz = UTCTZ()
 
 class PostField(object):
-  def __init__(self, name, required=False, is_argument=True, default="", arg_type=str, validator=None):
+  def __init__(self, name, required=False, is_argument=True, default="", arg_type=types.StringTypes, validator=None):
     """Represents a post field/argument
 
     Args:
