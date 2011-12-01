@@ -196,6 +196,9 @@ def get_comment_id(*args, **kwargs):
 def get_note_id(*args, **kwargs):
   return get_generic_id(*args, **kwargs)
 
+def get_photo_id(*args, **kwargs):
+  return str(random.randint(0, sys.maxint))
+
 def get_link_id(*args, **kwargs):
   return get_generic_id(*args, **kwargs)
 
@@ -251,6 +254,21 @@ CONNECTION_POST_ARGUMENTS = {"feed": MultiType("statuses", "links"),
                                        PostField("created_time", False, False, default=get_time),
                                        PostField("updated_time", False, False, default=get_time),
                                        # TODO: build out more stuff for notes
+                                       ],
+                             "photos":[PostField("message", True),
+                                       PostField("source", True),
+                                       PostField("id", False, False, default=get_photo_id),
+                                       PostField("from", False, False, arg_type=dict, default=get_from),
+                                       PostField("type", False, False, default="photo"),
+                                       PostField("name", False, False, default=""),
+                                       PostField("icon", False, False, default=default_url),
+                                       PostField("picture", False, False, default=default_url),
+                                       PostField("height", False, False, arg_type=int, default=100),  # TODO: detect the height and width from the image
+                                       PostField("width", False, False, arg_type=int, default=100),
+                                       PostField("link", False, False, default=default_url),
+                                       PostField("created_time", False, False, default=get_time),
+                                       PostField("updated_time", False, False, default=get_time)
+                                       # TODO: support tags, images, and position
                                        ],
                              "links": [PostField("link", True, default=default_url),
                                        PostField("message", False),
@@ -587,7 +605,7 @@ class GraphHandler(webapp2.RequestHandler):
           arg_value = field.get_default(**default_args)
         else:
           if field.name == "picture":  # Facebook automatically proxies pictures
-            # TODO: figure out how facebook generates the checksum, v, and size attributes
+            # TODO: figure out how facebook generates the checksum (looks like MD5), v, and size attributes
             arg_value = "https://www.facebook.com/app_full_proxy.php?app=1234567890&v=1&size=z&cksum=0&src=%s" % urllib.quote_plus(arg_value)
       if arg_value is not None:
         blob[field.name] = arg_value
