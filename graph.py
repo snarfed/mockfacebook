@@ -13,6 +13,7 @@ import os
 import sqlite3
 import traceback
 import types
+import urllib
 
 import datetime
 import random
@@ -584,6 +585,10 @@ class GraphHandler(webapp2.RequestHandler):
       else:
         if not field.is_valid(arg_value):
           arg_value = field.get_default(**default_args)
+        else:
+          if field.name == "picture":  # Facebook automatically proxies pictures
+            # TODO: figure out how facebook generates the checksum, v, and size attributes
+            arg_value = "https://www.facebook.com/app_full_proxy.php?app=1234567890&v=1&size=z&cksum=0&src=%s" % urllib.quote_plus(arg_value)
       if arg_value is not None:
         blob[field.name] = arg_value
 
