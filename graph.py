@@ -14,6 +14,7 @@ import sqlite3
 import traceback
 import types
 import urllib
+import re
 
 import datetime
 import random
@@ -184,7 +185,8 @@ class MultiType(object):
   def __init__(self, *args):
     self.connections = args
 
-default_url = "http://invalid/invalid"
+DEFAULT_URL = "http://invalid/invalid"
+YOUTUBE_LINK_RE = re.compile("http://[^/]*youtube")
 
 def get_generic_id(*args, **kwargs):
   obj_id = kwargs.get("obj_id", "obj_id")
@@ -219,7 +221,7 @@ def get_comments(*args, **kwargs):
   return {"count": 0}
 
 def get_name_from_link(*args, **kwargs):
-  return kwargs.get("link", default_url)
+  return kwargs.get("link", DEFAULT_URL)
 
 def get_likes(*args, **kwargs):
   return {"data": []}
@@ -261,16 +263,16 @@ CONNECTION_POST_ARGUMENTS = {"feed": MultiType("statuses", "links"),
                                        PostField("from", False, False, arg_type=dict, default=get_from),
                                        PostField("type", False, False, default="photo"),
                                        PostField("name", False, False, default=""),
-                                       PostField("icon", False, False, default=default_url),
-                                       PostField("picture", False, False, default=default_url),
+                                       PostField("icon", False, False, default=DEFAULT_URL),
+                                       PostField("picture", False, False, default=DEFAULT_URL),
                                        PostField("height", False, False, arg_type=int, default=100),  # TODO: detect the height and width from the image
                                        PostField("width", False, False, arg_type=int, default=100),
-                                       PostField("link", False, False, default=default_url),
+                                       PostField("link", False, False, default=DEFAULT_URL),
                                        PostField("created_time", False, False, default=get_time),
                                        PostField("updated_time", False, False, default=get_time)
                                        # TODO: support tags, images, and position
                                        ],
-                             "links": [PostField("link", True, default=default_url),
+                             "links": [PostField("link", True, default=DEFAULT_URL),
                                        PostField("message", False),
                                        PostField("id", False, False, default=get_link_id),
                                        PostField("from", False, False, arg_type=dict, default=get_from),
@@ -279,10 +281,10 @@ CONNECTION_POST_ARGUMENTS = {"feed": MultiType("statuses", "links"),
                                        PostField("caption", False, False),
                                        PostField("comments", False, False, arg_type=list, default=get_comments),
                                        PostField("description", False, False),
-                                       PostField("icon", False, False, default=default_url),
+                                       PostField("icon", False, False, default=DEFAULT_URL),
                                        PostField("actions", False, False, arg_type=list, default=get_actions),
                                        PostField("application", False, False, arg_type=dict, default=get_application),
-                                       PostField("picture", False, False, default=default_url),
+                                       PostField("picture", False, False, default=DEFAULT_URL),
                                        PostField("created_time", False, False, default=get_time),
                                        PostField("updated_time", False, False, default=get_time),
                                        ],
@@ -294,7 +296,7 @@ CONNECTION_POST_ARGUMENTS = {"feed": MultiType("statuses", "links"),
                                           PostField("type", False, False, default="status"),
                                           PostField("actions", False, False, arg_type=list, default=get_actions),
                                           PostField("comments", False, False, arg_type=dict, default=get_comments),
-                                          PostField("icon", False, False, default=default_url),
+                                          PostField("icon", False, False, default=DEFAULT_URL),
                                           PostField("application", False, False, arg_type=dict, default=get_application),
                                           ]}
 
@@ -625,6 +627,11 @@ class GraphHandler(webapp2.RequestHandler):
       last_exception = InternalError("Could not parse POST arguments")
       if "link" in arguments and "links" in argument_spec.connections:
         blob = self.create_blob_from_args(id, fields, CONNECTION_POST_ARGUMENTS.get("links"), arguments)
+
+        # Facebook detects YouTube links and changes the type to swf
+        if YOUTUBE_LINK_RE.search(blob.get("link", "")):
+          blob["type"] = "swf"
+
         connections = GraphHandler.posted_connections.setdefault(id, {})
         connections.setdefault(connection, []).insert(0,blob)
         if connection == "feed":
