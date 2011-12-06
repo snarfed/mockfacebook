@@ -1,4 +1,4 @@
-mockfacebook is a standalone HTTP server that implements Facebook's FQL and U999Graph API. It's useful for unit and integration testing and limited manual testing.
+mockfacebook is a standalone HTTP server that implements Facebook's FQL and Graph API. It's useful for unit and integration testing and limited manual testing.
 
 It includes a download utility that seeds its database with data and schemas from Facebook, which helps it keep up with Facebook API changes. You can also add your own data manually or programmatically.
 
@@ -8,6 +8,7 @@ mockfacebook is backed by SQLite. It's single threaded, so it's not suitable for
 
 The [Graph API](http://developers.facebook.com/docs/reference/api/) is served
 at the `/...` endpoint. It supports:
+
 * read access to all object types except `Insights`, `Permissions`, and `Subscription`
 * aliases as well as ids
 * read access to all connection types except `insights`, `mutualfriends`, `payments`, `subscriptions`, and `Comment/likes`
@@ -17,6 +18,7 @@ at the `/...` endpoint. It supports:
 
 [FQL](http://developers.facebook.com/docs/reference/fql/) is served at the
 `/method/fql.query` and `/fql` endpoints. It supports:
+
 * full FQL syntax, including subselects
 * read access to all tables except `insights` and `permissions`
 * indexable columns. returns an error if a non-indexable column is used in a `WHERE` clause.
@@ -28,6 +30,7 @@ at the `/...` endpoint. It supports:
 Right now, the FQL and Graph API use _separate_ data. There's progress toward unifying them, but it's incomplete and would be labor intensive to maintain. Still, feel free to [pitch in](#Contributing)!
 
 [OAuth authentication](http://developers.facebook.com/docs/authentication/) is served at the `/dialog/oauth` and `/oauth/access_token` endpoints. It supports:
+
 * auth codes
 * access tokens
 * server and client side flows
@@ -51,13 +54,13 @@ git submodule init
 git submodule update
 ```
 
-webapp2 also depends on webob:
+webapp2 also depends on [WebOb](http://www.webob.org/):
 
 ```
 pip install webob
 ```
 
-and [sqlparse](http://code.google.com/p/python-sqlparse/), which doesn't. Here are shell commands to download and install sqlparse:
+and [sqlparse](http://code.google.com/p/python-sqlparse/):
 
 ```
 # in the mockfacebook dir:
@@ -90,7 +93,7 @@ sqlite> INSERT INTO graph_objects(id, alias, data) VALUES(
 
 Once you have some data, just run `server.py`, point your Facebook app at `http://localhost:8000/`, and start testing!
 
-NOTE: You can supply a --me option (server.py --me=12345) to designate what resolves to "/me/". (More work will be done to expand to support multiple page_tokens to correlate this information automatically).
+NOTE: You can supply a `--me` option, e.g. `server.py --me=12345` to designate which id resolves to `/me`. More work will be done to expand to support multiple page_tokens to correlate this information automatically.
 
 ## Contributing
 
