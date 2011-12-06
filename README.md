@@ -8,30 +8,30 @@ mockfacebook is backed by SQLite. It's single threaded, so it's not suitable for
 
 The [Graph API](http://developers.facebook.com/docs/reference/api/) is served
 at the `/...` endpoint. It supports:
-  * read access to all object types except `Insights`, `Permissions`, and `Subscription`
-  * aliases as well as ids
-  * read access to all connection types except `insights`, `mutualfriends`, `payments`, `subscriptions`, and `Comment/likes`
-  * multiple selection via `?ids=...`
-  * checks access token if provided
-  * most error codes and messages
+* read access to all object types except `Insights`, `Permissions`, and `Subscription`
+* aliases as well as ids
+* read access to all connection types except `insights`, `mutualfriends`, `payments`, `subscriptions`, and `Comment/likes`
+* multiple selection via `?ids=...`
+* checks access token if provided
+* most error codes and messages
 
 [FQL](http://developers.facebook.com/docs/reference/fql/) is served at the
 `/method/fql.query` and `/fql` endpoints. It supports:
-  * full FQL syntax, including subselects
-  * read access to all tables except `insights` and `permissions`
-  * indexable columns. returns an error if a non-indexable column is used in a `WHERE` clause.
-  * all functions: `me(), now(), strlen(), substr(), strpos()`
-  * checks access token if provided
-  * JSON and XML output formats
-  * most error codes and messages
+* full FQL syntax, including subselects
+* read access to all tables except `insights` and `permissions`
+* indexable columns. returns an error if a non-indexable column is used in a `WHERE` clause.
+* all functions: `me(), now(), strlen(), substr(), strpos()`
+* checks access token if provided
+* JSON and XML output formats
+* most error codes and messages
 
 Right now, the FQL and Graph API use _separate_ data. There's progress toward unifying them, but it's incomplete and would be labor intensive to maintain. Still, feel free to [pitch in](#Contributing)!
 
 [OAuth authentication](http://developers.facebook.com/docs/authentication/) is served at the `/dialog/oauth` and `/oauth/access_token` endpoints. It supports:
-  * auth codes
-  * access tokens
-  * server and client side flows
-  * app login
+* auth codes
+* access tokens
+* server and client side flows
+* app login
 
 See the [issue tracker](https://github.com/rogerhu/mockfacebook/issues) for a list of other features that may eventually be supported.
 
