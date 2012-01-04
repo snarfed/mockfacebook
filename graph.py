@@ -36,7 +36,7 @@ REDIRECT_CONNECTION = 'picture'
 FRONT_PAGE = """
 <html>
 <body>
-<h2>Welcome to <a href="http://code.google.com/p/mockfacebook/">mockfacebook</a>!</h2>
+<h2>Welcome to <a href="https://github.com/rogerhu/mockfacebook">mockfacebook</a>!</h2>
 <p>This server is currently serving these endpoints:</p>
 <table style="border-spacing: .5em">
 <tr><td><a href="http://developers.facebook.com/docs/reference/api/">Graph API</a></td>
@@ -46,12 +46,12 @@ FRONT_PAGE = """
 <tr><td><a href="http://developers.facebook.com/docs/authentication/">OAuth</a></td>
  <td><code>/dialog/oauth</code> and <code>/oauth/access_token</code></td></tr>
 </table>
-<p>See the <a href="file://%s/README">README</a>
-and <a href="http://code.google.com/p/mockfacebook/">online docs</a> for more
+<p>See <code>README.md</code> and the
+<a href="https://github.com/rogerhu/mockfacebook#readme">online docs</a> for more
 information.</p>
 </body>
 </html>
-""" % os.path.dirname(__file__)
+"""
 
 class GraphError(Exception):
   """Base error class.

@@ -26,7 +26,7 @@ MOCKFACEBOOK_SCHEMA_SQL_FILE = thisdir('mockfacebook.sql')
 
 PY_HEADER = """\
 # Do not edit! Generated automatically by mockfacebook.
-# http://code.google.com/p/mockfacebook/
+# https://github.com/rogerhu/mockfacebook
 # %s
 """ % datetime.datetime.now()
 SQL_HEADER = PY_HEADER.replace('#', '--')

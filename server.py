@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """mockfacebook is a mock HTTP server for the Facebook FQL and Graph APIs.
 
-http://code.google.com/p/mockfacebook/
+https://github.com/rogerhu/mockfacebook
 
 Top-level HTTP server:
   server.py [--port PORT] [--me USER_ID] [--file SQLITE_DB_FILE]

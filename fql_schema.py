@@ -1,5 +1,5 @@
 # Do not edit! Generated automatically by mockfacebook.
-# http://code.google.com/p/mockfacebook/
+# https://github.com/rogerhu/mockfacebook
 # 2011-11-08 16:25:41.357079
 
 {'tables': {'album': (Column(name='aid', fb_type='string', sqlite_type='TEXT', indexable=True),
