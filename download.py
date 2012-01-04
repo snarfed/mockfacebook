@@ -681,8 +681,8 @@ def main():
   options = parse_args()
 
   if options.db_file:  # FIXME - should do dupe checking
-      sql = 'INSERT INTO oauth_access_tokens(code, token) VALUES("asdf", "%s");' % options.access_token
-      schemautil.get_db(options.db_file).executescript(sql)
+    sql = 'INSERT INTO oauth_access_tokens(code, token) VALUES("asdf", "%s");' % options.access_token
+    schemautil.get_db(options.db_file).executescript(sql)
 
   if options.fql_schema:
     fql_schema = schemautil.FqlSchema()

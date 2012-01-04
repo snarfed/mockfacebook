@@ -7,17 +7,22 @@ import collections
 import copy
 import datetime
 import json
+import os
 import pprint
 import re
 import sqlite3
 
-FQL_SCHEMA_PY_FILE = 'fql_schema.py'
-FQL_SCHEMA_SQL_FILE = 'fql_schema.sql'
-FQL_DATA_PY_FILE = 'fql_data.py'
-FQL_DATA_SQL_FILE = 'fql_data.sql'
-GRAPH_SCHEMA_PY_FILE = 'graph_schema.py'
-GRAPH_DATA_PY_FILE = 'graph_data.py'
-GRAPH_DATA_SQL_FILE = 'graph_data.sql'
+def thisdir(filename):
+  return os.path.join(os.path.dirname(__file__), filename)
+
+FQL_SCHEMA_PY_FILE = thisdir('fql_schema.py')
+FQL_SCHEMA_SQL_FILE = thisdir('fql_schema.sql')
+FQL_DATA_PY_FILE = thisdir('fql_data.py')
+FQL_DATA_SQL_FILE = thisdir('fql_data.sql')
+GRAPH_SCHEMA_PY_FILE = thisdir('graph_schema.py')
+GRAPH_DATA_PY_FILE = thisdir('graph_data.py')
+GRAPH_DATA_SQL_FILE = thisdir('graph_data.sql')
+MOCKFACEBOOK_SCHEMA_SQL_FILE = thisdir('mockfacebook.sql')
 
 PY_HEADER = """\
 # Do not edit! Generated automatically by mockfacebook.
@@ -32,7 +37,7 @@ SQL_HEADER = PY_HEADER.replace('#', '--')
 # maybe the "link" field?
 ALIAS_FIELD = 'username'
 
-DEFAULT_DB_FILE = 'mockfacebook.db'
+DEFAULT_DB_FILE = thisdir('mockfacebook.db')
 
 def get_db(filename):
   """Returns a SQLite db connection to the given file.
@@ -43,7 +48,7 @@ def get_db(filename):
     filename: the SQLite database file
   """
   conn = sqlite3.connect(filename)
-  for schema in 'mockfacebook.sql', FQL_SCHEMA_SQL_FILE:
+  for schema in MOCKFACEBOOK_SCHEMA_SQL_FILE, FQL_SCHEMA_SQL_FILE:
     with open(schema) as f:
       conn.executescript(f.read())
   return conn

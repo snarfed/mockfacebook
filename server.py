@@ -57,7 +57,7 @@ def parse_args(argv):
     description='mockfacebook is a mock HTTP server for the Facebook Graph API.')
   parser.add_option('-p', '--port', type='int', default=8000,
                     help='port to serve on (default %default)')
-  parser.add_option('-f', '--db_file', default= 'mockfacebook.db',
+  parser.add_option('-f', '--db_file', default=schemautil.DEFAULT_DB_FILE,
                     help='SQLite database file (default %default)')
   parser.add_option('--me', type='str', default=1,
                     help='user id that me() should return (default %default)')
