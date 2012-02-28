@@ -44,7 +44,7 @@ See the [issue tracker](https://github.com/rogerhu/mockfacebook/issues) for a li
 No packages or tarballs, just git clone from head!
 
 ```
-git clone http://github.com/rogerhu/mockfacebook
+git clone https://github.com/rogerhu/mockfacebook
 ```
 
 mockfacebook depends on [webapp2](http://webapp-improved.appspot.com/), which comes bundled as a git submodule:
@@ -57,7 +57,7 @@ git submodule update
 webapp2 also depends on [WebOb](http://www.webob.org/):
 
 ```
-pip install webob
+pip install webob  # or sudo apt-get install python-webob
 ```
 
 and [sqlparse](http://code.google.com/p/python-sqlparse/):
