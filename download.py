@@ -321,18 +321,18 @@ def urlopen_with_retries(url, data=None):
   raise e
 
 
-def make_column(table, column, fb_type, indexable=None):
+def make_column(table, column, raw_fb_type, indexable=None):
   """Populates and returns a Column for a schema.
 
   Args:
     table: string
     column: string
-    fb_type: string, type in facebook docs or graph api metadata field
+    raw_fb_type: string, type in facebook docs or graph api metadata field
     indexable: boolean, optional
 
   Returns: Column
   """
-  fb_type, sqlite_type = COLUMN_TYPES.get(fb_type.lower(), (None, None))
+  fb_type, sqlite_type = COLUMN_TYPES.get(raw_fb_type.lower(), (None, None))
   if fb_type is None:
     print >> sys.stderr, 'TODO: %s.%s has unknown type %s' % (
       table, column, raw_fb_type)
@@ -501,7 +501,10 @@ def fetch_graph_schema_and_data(ids):
   connections = []  # list of (name, url) tuples
   for id, object in objects.items():
     metadata = object.pop('metadata')
-    table = object['type']
+
+    if 'type' not in object:
+      object['type'] = metadata['type']
+    table = object.get('type')
 
     # columns
     fields = metadata.get('fields')
@@ -600,6 +603,10 @@ def batch_request(urls, args=None):
 
   results = {}
   for url, resp in zip(urls, responses):
+    if not resp:
+      # no data for this request
+      continue
+
     code = resp['code']
     body = resp['body']
     if code == 200:
@@ -644,8 +651,8 @@ http://developers.facebook.com/tools/explorer?method=GET&path=me""")
     '--fql_schema', action='store_true', dest='fql_schema', default=False,
     help="Scrape the FQL schema instead of using the existing schema file.")
   parser.add_option(
-    '--no_fql_data', action='store_false', dest='fql_data', default=True,
-    help="Don't generate FQL example data.")
+    '--fql_data', action='store_true', dest='fql_data', default=False,
+    help="Generate FQL example data.")
   parser.add_option(
     '--no_graph', action='store_false', dest='graph', default=True,
     help="Don't generate Graph API schema or data. Use the existing files instead.")

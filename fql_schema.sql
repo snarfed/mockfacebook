@@ -1,6 +1,6 @@
 -- Do not edit! Generated automatically by mockfacebook.
--- http://code.google.com/p/mockfacebook/
--- 2011-11-08 16:25:41.357079
+-- https://github.com/rogerhu/mockfacebook
+-- 2012-10-23 22:34:02.059169
 
 
 CREATE TABLE IF NOT EXISTS `album` (
@@ -23,13 +23,15 @@ CREATE TABLE IF NOT EXISTS `album` (
   can_upload INTEGER,
   photo_count INTEGER,
   video_count INTEGER,
-  UNIQUE (aid, object_id, owner, cover_pid, cover_object_id, name, created, modified, description, location, size, link, visible, modified_major, edit_link, type, can_upload, photo_count, video_count)
+  like_info ,
+  comment_info ,
+  UNIQUE (aid, object_id, owner, cover_pid, cover_object_id, name, created, modified, description, location, size, link, visible, modified_major, edit_link, type, can_upload, photo_count, video_count, like_info, comment_info)
 );
 
 CREATE TABLE IF NOT EXISTS `application` (
   app_id TEXT,
   api_key TEXT,
-  canvas_name TEXT,
+  namespace TEXT,
   display_name TEXT,
   icon_url TEXT,
   logo_url TEXT,
@@ -43,7 +45,40 @@ CREATE TABLE IF NOT EXISTS `application` (
   subcategory TEXT,
   is_facebook_app INTEGER,
   restriction_info ,
-  UNIQUE (app_id, api_key, canvas_name, display_name, icon_url, logo_url, company_name, developers, description, daily_active_users, weekly_active_users, monthly_active_users, category, subcategory, is_facebook_app, restriction_info)
+  app_domains ,
+  auth_dialog_data_help_url TEXT,
+  auth_dialog_description TEXT,
+  auth_dialog_headline TEXT,
+  auth_dialog_perms_explanation TEXT,
+  auth_referral_user_perms ,
+  auth_referral_friend_perms ,
+  auth_referral_default_activity_privacy TEXT,
+  auth_referral_enabled INTEGER,
+  auth_referral_extended_perms ,
+  auth_referral_response_type TEXT,
+  canvas_fluid_height INTEGER,
+  canvas_fluid_width INTEGER,
+  canvas_url TEXT,
+  contact_email TEXT,
+  created_time INTEGER,
+  creator_uid INTEGER,
+  deauth_callback_url TEXT,
+  iphone_app_store_id TEXT,
+  hosting_url TEXT,
+  mobile_web_url TEXT,
+  page_tab_default_name TEXT,
+  page_tab_url TEXT,
+  privacy_policy_url TEXT,
+  secure_canvas_url TEXT,
+  secure_page_tab_url TEXT,
+  server_ip_whitelist TEXT,
+  social_discovery INTEGER,
+  terms_of_service_url TEXT,
+  update_ip_whitelist TEXT,
+  user_support_email TEXT,
+  user_support_url TEXT,
+  website_url TEXT,
+  UNIQUE (app_id, api_key, namespace, display_name, icon_url, logo_url, company_name, developers, description, daily_active_users, weekly_active_users, monthly_active_users, category, subcategory, is_facebook_app, restriction_info, app_domains, auth_dialog_data_help_url, auth_dialog_description, auth_dialog_headline, auth_dialog_perms_explanation, auth_referral_user_perms, auth_referral_friend_perms, auth_referral_default_activity_privacy, auth_referral_enabled, auth_referral_extended_perms, auth_referral_response_type, canvas_fluid_height, canvas_fluid_width, canvas_url, contact_email, created_time, creator_uid, deauth_callback_url, iphone_app_store_id, hosting_url, mobile_web_url, page_tab_default_name, page_tab_url, privacy_policy_url, secure_canvas_url, secure_page_tab_url, server_ip_whitelist, social_discovery, terms_of_service_url, update_ip_whitelist, user_support_email, user_support_url, website_url)
 );
 
 CREATE TABLE IF NOT EXISTS `apprequest` (
@@ -84,9 +119,11 @@ CREATE TABLE IF NOT EXISTS `comment` (
   app_id INTEGER,
   likes INTEGER,
   comments ,
+  can_like INTEGER,
   user_likes INTEGER,
+  text_tags ,
   is_private INTEGER,
-  UNIQUE (xid, object_id, post_id, fromid, time, text, id, username, reply_xid, post_fbid, app_id, likes, comments, user_likes, is_private)
+  UNIQUE (xid, object_id, post_id, fromid, time, text, id, username, reply_xid, post_fbid, app_id, likes, comments, can_like, user_likes, text_tags, is_private)
 );
 
 CREATE TABLE IF NOT EXISTS `comments_info` (
@@ -117,7 +154,8 @@ CREATE TABLE IF NOT EXISTS `cookies` (
 CREATE TABLE IF NOT EXISTS `developer` (
   developer_id TEXT,
   application_id TEXT,
-  UNIQUE (developer_id, application_id)
+  role TEXT,
+  UNIQUE (developer_id, application_id, role)
 );
 
 CREATE TABLE IF NOT EXISTS `domain` (
@@ -135,18 +173,14 @@ CREATE TABLE IF NOT EXISTS `domain_admin` (
 CREATE TABLE IF NOT EXISTS `event` (
   eid INTEGER,
   name TEXT,
-  tagline TEXT,
-  nid INTEGER,
   pic_small TEXT,
   pic_big TEXT,
   pic_square TEXT,
   pic TEXT,
   host TEXT,
   description TEXT,
-  event_type TEXT,
-  event_subtype TEXT,
-  start_time INTEGER,
-  end_time INTEGER,
+  start_time TEXT,
+  end_time TEXT,
   creator INTEGER,
   update_time INTEGER,
   location TEXT,
@@ -154,14 +188,19 @@ CREATE TABLE IF NOT EXISTS `event` (
   privacy TEXT,
   hide_guest_list INTEGER,
   can_invite_friends INTEGER,
-  UNIQUE (eid, name, tagline, nid, pic_small, pic_big, pic_square, pic, host, description, event_type, event_subtype, start_time, end_time, creator, update_time, location, venue, privacy, hide_guest_list, can_invite_friends)
+  all_members_count INTEGER,
+  attending_count INTEGER,
+  unsure_count INTEGER,
+  declined_count INTEGER,
+  not_replied_count INTEGER,
+  UNIQUE (eid, name, pic_small, pic_big, pic_square, pic, host, description, start_time, end_time, creator, update_time, location, venue, privacy, hide_guest_list, can_invite_friends, all_members_count, attending_count, unsure_count, declined_count, not_replied_count)
 );
 
 CREATE TABLE IF NOT EXISTS `event_member` (
   uid TEXT,
   eid TEXT,
   rsvp_status TEXT,
-  start_time INTEGER,
+  start_time TEXT,
   UNIQUE (uid, eid, rsvp_status, start_time)
 );
 
@@ -193,7 +232,8 @@ CREATE TABLE IF NOT EXISTS `friendlist` (
   owner INTEGER,
   flid TEXT,
   name TEXT,
-  UNIQUE (owner, flid, name)
+  type TEXT,
+  UNIQUE (owner, flid, name, type)
 );
 
 CREATE TABLE IF NOT EXISTS `friendlist_member` (
@@ -271,6 +311,19 @@ CREATE TABLE IF NOT EXISTS `link_stat` (
   UNIQUE (url, normalized_url, share_count, like_count, comment_count, total_count, click_count, comments_fbid, commentsbox_count)
 );
 
+CREATE TABLE IF NOT EXISTS `location_post` (
+  id INTEGER,
+  author_uid INTEGER,
+  app_id INTEGER,
+  timestamp INTEGER,
+  tagged_uids ,
+  page_id INTEGER,
+  page_type TEXT,
+  coords ,
+  type TEXT,
+  UNIQUE (id, author_uid, app_id, timestamp, tagged_uids, page_id, page_type, coords, type)
+);
+
 CREATE TABLE IF NOT EXISTS `mailbox_folder` (
   folder_id TEXT,
   viewer_id TEXT,
@@ -299,15 +352,15 @@ CREATE TABLE IF NOT EXISTS `note` (
   content TEXT,
   content_html TEXT,
   title TEXT,
-  UNIQUE (uid, note_id, created_time, updated_time, content, content_html, title)
+  like_info ,
+  comment_info ,
+  UNIQUE (uid, note_id, created_time, updated_time, content, content_html, title, like_info, comment_info)
 );
 
 CREATE TABLE IF NOT EXISTS `notification` (
   notification_id TEXT,
   sender_id INTEGER,
   recipient_id INTEGER,
-  created_time INTEGER,
-  updated_time INTEGER,
   title_html TEXT,
   title_text TEXT,
   body_html TEXT,
@@ -319,7 +372,7 @@ CREATE TABLE IF NOT EXISTS `notification` (
   object_id TEXT,
   object_type TEXT,
   icon_url TEXT,
-  UNIQUE (notification_id, sender_id, recipient_id, created_time, updated_time, title_html, title_text, body_html, body_text, href, app_id, is_unread, is_hidden, object_id, object_type, icon_url)
+  UNIQUE (notification_id, sender_id, recipient_id, title_html, title_text, body_html, body_text, href, app_id, is_unread, is_hidden, object_id, object_type, icon_url)
 );
 
 CREATE TABLE IF NOT EXISTS `object_url` (
@@ -330,11 +383,24 @@ CREATE TABLE IF NOT EXISTS `object_url` (
   UNIQUE (url, id, type, site)
 );
 
+CREATE TABLE IF NOT EXISTS `offer` (
+  id INTEGER,
+  owner_id INTEGER,
+  title TEXT,
+  image_url TEXT,
+  terms TEXT,
+  claim_limit INTEGER,
+  created_time INTEGER,
+  expiration_time TEXT,
+  UNIQUE (id, owner_id, title, image_url, terms, claim_limit, created_time, expiration_time)
+);
+
 CREATE TABLE IF NOT EXISTS `page` (
   page_id INTEGER,
   name TEXT,
   username TEXT,
   description TEXT,
+  page_url TEXT,
   categories ,
   is_community_page INTEGER,
   pic_small TEXT,
@@ -342,14 +408,20 @@ CREATE TABLE IF NOT EXISTS `page` (
   pic_square TEXT,
   pic TEXT,
   pic_large TEXT,
-  page_url TEXT,
+  pic_cover ,
+  unread_notif_count INTEGER,
+  new_like_count INTEGER,
   fan_count INTEGER,
+  global_brand_like_count INTEGER,
+  global_brand_talking_about_count INTEGER,
+  global_brand_parent_page_id INTEGER,
   type TEXT,
   website TEXT,
   has_added_app INTEGER,
   general_info TEXT,
   can_post INTEGER,
   checkins INTEGER,
+  is_published INTEGER,
   founded TEXT,
   company_overview TEXT,
   mission TEXT,
@@ -397,7 +469,7 @@ CREATE TABLE IF NOT EXISTS `page` (
   built TEXT,
   features TEXT,
   mpg TEXT,
-  UNIQUE (page_id, name, username, description, categories, is_community_page, pic_small, pic_big, pic_square, pic, pic_large, page_url, fan_count, type, website, has_added_app, general_info, can_post, checkins, founded, company_overview, mission, products, location, parking, hours, pharma_safety_info, public_transit, attire, payment_options, culinary_team, general_manager, price_range, restaurant_services, restaurant_specialties, phone, release_date, genre, starring, screenplay_by, directed_by, produced_by, studio, awards, plot_outline, season, network, schedule, written_by, band_members, hometown, current_location, record_label, booking_agent, press_contact, artists_we_like, influences, band_interests, bio, affiliation, birthday, personal_info, personal_interests, built, features, mpg)
+  UNIQUE (page_id, name, username, description, page_url, categories, is_community_page, pic_small, pic_big, pic_square, pic, pic_large, pic_cover, unread_notif_count, new_like_count, fan_count, global_brand_like_count, global_brand_talking_about_count, global_brand_parent_page_id, type, website, has_added_app, general_info, can_post, checkins, is_published, founded, company_overview, mission, products, location, parking, hours, pharma_safety_info, public_transit, attire, payment_options, culinary_team, general_manager, price_range, restaurant_services, restaurant_specialties, phone, release_date, genre, starring, screenplay_by, directed_by, produced_by, studio, awards, plot_outline, season, network, schedule, written_by, band_members, hometown, current_location, record_label, booking_agent, press_contact, artists_we_like, influences, band_interests, bio, affiliation, birthday, personal_info, personal_interests, built, features, mpg)
 );
 
 CREATE TABLE IF NOT EXISTS `page_admin` (
@@ -422,6 +494,24 @@ CREATE TABLE IF NOT EXISTS `page_fan` (
   UNIQUE (uid, page_id, type, profile_section, created_time)
 );
 
+CREATE TABLE IF NOT EXISTS `page_global_brand_child` (
+  parent_page_id INTEGER,
+  global_brand_child_page_id INTEGER,
+  UNIQUE (parent_page_id, global_brand_child_page_id)
+);
+
+CREATE TABLE IF NOT EXISTS `page_milestone` (
+  id INTEGER,
+  owner_id INTEGER,
+  title TEXT,
+  description TEXT,
+  created_time INTEGER,
+  updated_time INTEGER,
+  start_time INTEGER,
+  end_time INTEGER,
+  UNIQUE (id, owner_id, title, description, created_time, updated_time, start_time, end_time)
+);
+
 CREATE TABLE IF NOT EXISTS `permissions_info` (
   permission_name TEXT,
   header TEXT,
@@ -430,6 +520,7 @@ CREATE TABLE IF NOT EXISTS `permissions_info` (
 );
 
 CREATE TABLE IF NOT EXISTS `photo` (
+  object_id INTEGER,
   pid TEXT,
   aid TEXT,
   owner TEXT,
@@ -444,24 +535,37 @@ CREATE TABLE IF NOT EXISTS `photo` (
   src_height INTEGER,
   link TEXT,
   caption TEXT,
+  caption_tags ,
   created INTEGER,
   modified INTEGER,
   position INTEGER,
-  object_id INTEGER,
   album_object_id INTEGER,
+  place_id INTEGER,
   images ,
-  UNIQUE (pid, aid, owner, src_small, src_small_width, src_small_height, src_big, src_big_width, src_big_height, src, src_width, src_height, link, caption, created, modified, position, object_id, album_object_id, images)
+  like_info ,
+  comment_info ,
+  can_delete INTEGER,
+  UNIQUE (object_id, pid, aid, owner, src_small, src_small_width, src_small_height, src_big, src_big_width, src_big_height, src, src_width, src_height, link, caption, caption_tags, created, modified, position, album_object_id, place_id, images, like_info, comment_info, can_delete)
+);
+
+CREATE TABLE IF NOT EXISTS `photo_src` (
+  photo_id INTEGER,
+  size TEXT,
+  width INTEGER,
+  height INTEGER,
+  src TEXT,
+  UNIQUE (photo_id, size, width, height, src)
 );
 
 CREATE TABLE IF NOT EXISTS `photo_tag` (
+  object_id INTEGER,
   pid TEXT,
   subject TEXT,
-  object_id INTEGER,
   text TEXT,
   xcoord REAL,
   ycoord REAL,
   created INTEGER,
-  UNIQUE (pid, subject, object_id, text, xcoord, ycoord, created)
+  UNIQUE (object_id, pid, subject, text, xcoord, ycoord, created)
 );
 
 CREATE TABLE IF NOT EXISTS `place` (
@@ -469,8 +573,8 @@ CREATE TABLE IF NOT EXISTS `place` (
   name TEXT,
   description TEXT,
   geometry ,
-  latitude INTEGER,
-  longitude INTEGER,
+  latitude REAL,
+  longitude REAL,
   checkin_count INTEGER,
   display_subtext TEXT,
   UNIQUE (page_id, name, description, geometry, latitude, longitude, checkin_count, display_subtext)
@@ -513,6 +617,27 @@ CREATE TABLE IF NOT EXISTS `profile` (
   type TEXT,
   username TEXT,
   UNIQUE (id, can_post, name, url, pic, pic_square, pic_small, pic_big, pic_crop, type, username)
+);
+
+CREATE TABLE IF NOT EXISTS `profile_pic` (
+  id INTEGER,
+  width INTEGER,
+  height INTEGER,
+  url TEXT,
+  is_silhouette INTEGER,
+  real_width INTEGER,
+  real_height INTEGER,
+  UNIQUE (id, width, height, url, is_silhouette, real_width, real_height)
+);
+
+CREATE TABLE IF NOT EXISTS `profile_view` (
+  profile_id INTEGER,
+  app_id INTEGER,
+  link TEXT,
+  custom_image_url TEXT,
+  position INTEGER,
+  is_permanent INTEGER,
+  UNIQUE (profile_id, app_id, link, custom_image_url, position, is_permanent)
 );
 
 CREATE TABLE IF NOT EXISTS `question` (
@@ -582,7 +707,8 @@ CREATE TABLE IF NOT EXISTS `status` (
   time INTEGER,
   source INTEGER,
   message TEXT,
-  UNIQUE (uid, status_id, time, source, message)
+  place_id INTEGER,
+  UNIQUE (uid, status_id, time, source, message, place_id)
 );
 
 CREATE TABLE IF NOT EXISTS `stream` (
@@ -603,6 +729,7 @@ CREATE TABLE IF NOT EXISTS `stream` (
   impressions INTEGER,
   comments ,
   likes ,
+  place INTEGER,
   privacy ,
   permalink TEXT,
   xid INTEGER,
@@ -610,7 +737,8 @@ CREATE TABLE IF NOT EXISTS `stream` (
   message_tags ,
   description TEXT,
   description_tags ,
-  UNIQUE (post_id, viewer_id, app_id, source_id, updated_time, created_time, filter_key, attribution, actor_id, target_id, message, app_data, action_links, attachment, impressions, comments, likes, privacy, permalink, xid, tagged_ids, message_tags, description, description_tags)
+  type INTEGER,
+  UNIQUE (post_id, viewer_id, app_id, source_id, updated_time, created_time, filter_key, attribution, actor_id, target_id, message, app_data, action_links, attachment, impressions, comments, likes, place, privacy, permalink, xid, tagged_ids, message_tags, description, description_tags, type)
 );
 
 CREATE TABLE IF NOT EXISTS `stream_filter` (
@@ -752,6 +880,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   religion TEXT,
   birthday TEXT,
   birthday_date TEXT,
+  devices ,
   sex TEXT,
   hometown_location ,
   meeting_sex ,
@@ -785,6 +914,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   pic_big_with_logo TEXT,
   pic_square_with_logo TEXT,
   pic_with_logo TEXT,
+  pic_cover ,
   allowed_restrictions TEXT,
   verified INTEGER,
   profile_blurb TEXT,
@@ -797,7 +927,6 @@ CREATE TABLE IF NOT EXISTS `user` (
   name_format TEXT,
   video_upload_limits ,
   games TEXT,
-  is_minor INTEGER,
   work ,
   education ,
   sports ,
@@ -809,13 +938,12 @@ CREATE TABLE IF NOT EXISTS `user` (
   friend_count INTEGER,
   mutual_friend_count INTEGER,
   can_post INTEGER,
-  UNIQUE (uid, username, first_name, middle_name, last_name, name, pic_small, pic_big, pic_square, pic, affiliations, profile_update_time, timezone, religion, birthday, birthday_date, sex, hometown_location, meeting_sex, meeting_for, relationship_status, significant_other_id, political, current_location, activities, interests, is_app_user, music, tv, movies, books, quotes, about_me, hs_info, education_history, work_history, notes_count, wall_count, status, has_added_app, online_presence, locale, proxied_email, profile_url, email_hashes, pic_small_with_logo, pic_big_with_logo, pic_square_with_logo, pic_with_logo, allowed_restrictions, verified, profile_blurb, family, website, is_blocked, contact_email, email, third_party_id, name_format, video_upload_limits, games, is_minor, work, education, sports, favorite_athletes, favorite_teams, inspirational_people, languages, likes_count, friend_count, mutual_friend_count, can_post)
+  UNIQUE (uid, username, first_name, middle_name, last_name, name, pic_small, pic_big, pic_square, pic, affiliations, profile_update_time, timezone, religion, birthday, birthday_date, devices, sex, hometown_location, meeting_sex, meeting_for, relationship_status, significant_other_id, political, current_location, activities, interests, is_app_user, music, tv, movies, books, quotes, about_me, hs_info, education_history, work_history, notes_count, wall_count, status, has_added_app, online_presence, locale, proxied_email, profile_url, email_hashes, pic_small_with_logo, pic_big_with_logo, pic_square_with_logo, pic_with_logo, pic_cover, allowed_restrictions, verified, profile_blurb, family, website, is_blocked, contact_email, email, third_party_id, name_format, video_upload_limits, games, work, education, sports, favorite_athletes, favorite_teams, inspirational_people, languages, likes_count, friend_count, mutual_friend_count, can_post)
 );
 
 CREATE TABLE IF NOT EXISTS `video` (
   vid INTEGER,
   owner INTEGER,
-  album_id INTEGER,
   title TEXT,
   description TEXT,
   link TEXT,
@@ -826,7 +954,7 @@ CREATE TABLE IF NOT EXISTS `video` (
   length REAL,
   src TEXT,
   src_hq TEXT,
-  UNIQUE (vid, owner, album_id, title, description, link, thumbnail_link, embed_html, updated_time, created_time, length, src, src_hq)
+  UNIQUE (vid, owner, title, description, link, thumbnail_link, embed_html, updated_time, created_time, length, src, src_hq)
 );
 
 CREATE TABLE IF NOT EXISTS `video_tag` (
