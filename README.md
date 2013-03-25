@@ -4,6 +4,8 @@ It includes a download utility that seeds its database with data and schemas fro
 
 mockfacebook is backed by SQLite. It's single threaded, so it's not suitable for load testing, high throughput, or performance.
 
+License: This project is placed in the public domain.
+
 ## Features
 
 The [Graph API](http://developers.facebook.com/docs/reference/api/) is served
