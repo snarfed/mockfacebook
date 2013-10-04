@@ -1,3 +1,6 @@
+mockfacebook ![beer_cap_facebook_logo](https://raw.github.com/snarfed/mockfacebook/master/beer_cap_facebook_logo.png)
+===
+
 mockfacebook is a standalone HTTP server that implements Facebook's FQL and Graph API. It's useful for unit and integration testing and limited manual testing.
 
 It includes a download utility that seeds its database with data and schemas from Facebook, which helps it keep up with Facebook API changes. You can also add your own data manually or programmatically.
