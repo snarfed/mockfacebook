@@ -1,5 +1,4 @@
-![beer_cap_facebook_logo](https://raw.github.com/snarfed/mockfacebook/master/beer_cap_facebook_logo.png)
-mockfacebook
+![beer_cap_facebook_logo](https://raw.github.com/snarfed/mockfacebook/master/beer_cap_facebook_logo.png) mockfacebook
 ===
 
 mockfacebook is a standalone HTTP server that implements Facebook's FQL and Graph API. It's useful for unit and integration testing and limited manual testing.
